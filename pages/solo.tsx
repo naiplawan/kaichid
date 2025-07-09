@@ -19,6 +19,7 @@ export default function Solo() {
   const [response, setResponse] = useState('');
   const [availableQuestions, setAvailableQuestions] = useState<Question[]>([]);
   const [showLevelSelect, setShowLevelSelect] = useState(true);
+  const [privacy, setPrivacy] = useState<'private' | 'shared'>('private');
 
   useEffect(() => {
     if (!user) {
@@ -65,10 +66,11 @@ export default function Solo() {
 
   const handleSaveResponse = () => {
     if (gameState.currentQuestion) {
-      saveQuestion(gameState.currentQuestion, response);
+      saveQuestion(gameState.currentQuestion, response, privacy);
     }
     setResponse('');
     setShowResponse(false);
+    setPrivacy('private');
     nextQuestion();
   };
 
@@ -102,10 +104,10 @@ export default function Solo() {
   const handleReportQuestion = async (questionId: string) => {
     const { error } = await supabase.rpc('increment_reported_count', { q_id: questionId });
     if (error) {
-        console.error('Error reporting question:', error);
+      console.error('Error reporting question:', error);
     } else {
-        // Maybe show a confirmation to the user
-        console.log('Question reported');
+      // Maybe show a confirmation to the user
+      console.log('Question reported');
     }
   };
 
@@ -216,6 +218,29 @@ export default function Solo() {
                 placeholder="Write your thoughts, feelings, or insights..."
                 className="w-full h-40 p-4 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-mystical-gold text-white resize-none"
               />
+
+              <div className="flex items-center gap-4 mb-4">
+                <label className="flex items-center gap-2 text-gray-300">
+                  <input
+                    type="radio"
+                    name="privacy"
+                    value="private"
+                    checked={privacy === 'private'}
+                    onChange={() => setPrivacy('private')}
+                  />
+                  Private
+                </label>
+                <label className="flex items-center gap-2 text-gray-300">
+                  <input
+                    type="radio"
+                    name="privacy"
+                    value="shared"
+                    checked={privacy === 'shared'}
+                    onChange={() => setPrivacy('shared')}
+                  />
+                  Shared
+                </label>
+              </div>
 
               <div className="flex space-x-4 mt-6">
                 <button onClick={handleSaveResponse} className="oracle-button flex-1">

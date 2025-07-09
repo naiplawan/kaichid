@@ -1,0 +1,32 @@
+{
+  "en": {
+    "backToHome": "Back to Home",
+    "welcome": "Welcome to KAICHID",
+    "intro": "Experience the power of meaningful conversations through our mystical card system. Transform surface-level interactions into profound connections.",
+    "howToPlay": "How to Play",
+    "howToPlaySteps": [
+      "Choose your demo experience: Solo or Multiplayer.",
+      "In <b>Solo Mode</b>, swipe right for \"Insight\" to answer a question, or left to \"Skip\".",
+      "Type your reflection and save it to continue.",
+      "In <b>Multiplayer Mode</b>, take turns answering questions with other players. The current player can respond, others wait.",
+      "View mock user profiles and stats to see how the community engages.",
+      "Use the navigation buttons to explore the real app: Dashboard, Journal, Submit Question, etc."
+    ],
+    "howToPlayNote": "This demo is a safe space—explore, reflect, and connect!"
+  },
+  "th": {
+    "backToHome": "กลับหน้าหลัก",
+    "welcome": "ยินดีต้อนรับสู่ KAICHID",
+    "intro": "สัมผัสพลังของบทสนทนาอันลึกซึ้งผ่านระบบไพ่ลึกลับของเรา เปลี่ยนการพูดคุยผิวเผินให้กลายเป็นความสัมพันธ์ที่ลึกซึ้ง",
+    "howToPlay": "วิธีเล่น",
+    "howToPlaySteps": [
+      "เลือกโหมดเดโม: เล่นคนเดียวหรือเล่นกับเพื่อน",
+      "ใน <b>โหมดเล่นคนเดียว</b> ปัดขวาเพื่อ \"ตอบ\" หรือปัดซ้ายเพื่อ \"ข้าม\" คำถาม",
+      "พิมพ์คำตอบของคุณแล้วบันทึกเพื่อไปต่อ",
+      "ใน <b>โหมดเล่นกับเพื่อน</b> สลับกันตอบคำถาม ผู้เล่นที่ถึงตาจะตอบได้ คนอื่นรอ",
+      "ดูโปรไฟล์และสถิติของผู้ใช้ตัวอย่างเพื่อเห็นการมีส่วนร่วมของชุมชน",
+      "ใช้ปุ่มนำทางเพื่อสำรวจแอปจริง: แดชบอร์ด ไดอารี่ ส่งคำถาม ฯลฯ"
+    ],
+    "howToPlayNote": "เดโมนี้คือพื้นที่ปลอดภัย—สำรวจ คิด และเชื่อมต่อกันได้อย่างอิสระ!"
+  }
+}

@@ -1,16 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth } from '@/lib/firebase';
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  User,
-} from 'firebase/auth';
 import { supabase } from '@/lib/supabase';
+import { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, username: string) => Promise<void>;
@@ -29,15 +23,35 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
+    // Get initial session
+    const getInitialSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    };
+
+    getInitialSession();
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+
+      if (session?.user) {
         // Create or update user profile in Supabase
         const { error } = await supabase.from('user_profiles').upsert({
-          id: user.uid,
-          email: user.email,
+          id: session.user.id,
+          email: session.user.email,
           updated_at: new Date().toISOString(),
         });
 
@@ -45,40 +59,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error('Error updating user profile:', error);
         }
       }
-      setUser(user);
-      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => subscription.unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
-  };
-
-  const signUp = async (email: string, password: string, username: string) => {
-    const { user } = await createUserWithEmailAndPassword(auth, email, password);
-
-    // Create user profile in Supabase
-    const { error } = await supabase.from('user_profiles').insert({
-      id: user.uid,
-      email: user.email,
-      username,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
 
     if (error) {
-      console.error('Error creating user profile:', error);
+      throw error;
+    }
+  };
+
+  const signUp = async (email: string, password: string, username: string) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (data.user) {
+      // Create user profile in Supabase
+      const { error: profileError } = await supabase.from('user_profiles').insert({
+        id: data.user.id,
+        email: data.user.email,
+        username,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+      if (profileError) {
+        console.error('Error creating user profile:', profileError);
+      }
     }
   };
 
   const logout = async () => {
-    await signOut(auth);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      throw error;
+    }
   };
 
   const value = {
     user,
+    session,
     loading,
     signIn,
     signUp,

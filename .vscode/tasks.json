@@ -8,6 +8,38 @@
 			"group": "build",
 			"isBackground": false,
 			"problemMatcher": []
+		},
+		{
+			"label": "Start Development Server",
+			"type": "shell",
+			"command": "pnpm dev",
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build for Production",
+			"type": "shell",
+			"command": "pnpm build",
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Linter",
+			"type": "shell",
+			"command": "pnpm lint",
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": ["$eslint-stylish"]
+		},
+		{
+			"label": "Type Check",
+			"type": "shell",
+			"command": "pnpm type-check",
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": ["$tsc"]
 		}
 	]
 }

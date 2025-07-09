@@ -38,8 +38,11 @@ export default function Dashboard() {
     <div className="min-h-screen">
       {/* Header */}
       <header className="p-6 flex justify-between items-center border-b border-gray-800">
-        <h1 className="text-2xl font-mystical text-mystical-gold">Deep Talk Oracle</h1>
+        <h1 className="text-2xl font-mystical text-mystical-gold">KAICHID</h1>
         <div className="flex items-center space-x-4">
+          <Link href="/demo" className="oracle-button bg-gradient-to-r from-green-400 to-purple-500 text-white">
+            Try Demo
+          </Link>
           <span className="text-gray-300">Welcome, {user.email}</span>
           <button onClick={handleLogout} className="text-gray-400 hover:text-mystical-gold transition-colors">
             Leave Circle
@@ -87,7 +90,7 @@ export default function Dashboard() {
             <Link href="/multiplayer">
               <div>
                 <div className="text-6xl mb-6">👥</div>
-                <h3 className="text-2xl font-mystical mb-4 text-mystical-gold">Sacred Circle</h3>
+                <h3 className="text-2xl font-mystical mb-4 text-mystical-gold">KAICHID Circle</h3>
                 <p className="text-gray-300 mb-6">
                   Connect with friends in real-time conversations. Share insights and deepen bonds together.
                 </p>

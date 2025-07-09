@@ -31,9 +31,10 @@ module.exports = {
         },
         mystical: {
           purple: '#8b5cf6',
-          gold: '#f59e0b',
+          gold: '#D4AF37',
           silver: '#6b7280',
-          dark: '#1f2937',
+          dark: '#0F0F23',
+          'dark-lighter': '#1A1B3A',
         },
       },
       animation: {
@@ -66,8 +67,11 @@ module.exports = {
         },
       },
       fontFamily: {
-        mystical: ['Cinzel', 'serif'],
-        oracle: ['Crimson Text', 'serif'],
+        mystical: ['Roboto Condensed', 'sans-serif'],
+        oracle: ['Roboto Condensed', 'sans-serif'],
+        sans: ['Roboto Condensed', 'sans-serif'],
+        serif: ['Roboto Condensed', 'sans-serif'],
+        mono: ['Roboto Condensed', 'sans-serif'],
       },
     },
   },

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/router';
@@ -25,8 +24,8 @@ export default function SubmitQuestion() {
     }
 
     if (!questionText || !theme) {
-        setError('Please fill out all fields.');
-        return;
+      setError('Please fill out all fields.');
+      return;
     }
 
     setLoading(true);
@@ -39,7 +38,7 @@ export default function SubmitQuestion() {
         level,
         theme,
         is_custom: true,
-        creator_id: user.uid,
+        creator_id: user.id,
         status: 'pending',
       },
     ]);
@@ -96,9 +95,33 @@ export default function SubmitQuestion() {
           <div>
             <label className="block text-lg font-medium text-gray-300 mb-2">Level</label>
             <div className="flex space-x-4">
-              <button type="button" onClick={() => setLevel('green')} className={`flex-1 p-4 rounded-lg border-2 transition-all ${level === 'green' ? 'border-green-oracle bg-green-oracle/20' : 'border-gray-600'}`}>Green</button>
-              <button type="button" onClick={() => setLevel('yellow')} className={`flex-1 p-4 rounded-lg border-2 transition-all ${level === 'yellow' ? 'border-yellow-oracle bg-yellow-oracle/20' : 'border-gray-600'}`}>Yellow</button>
-              <button type="button" onClick={() => setLevel('red')} className={`flex-1 p-4 rounded-lg border-2 transition-all ${level === 'red' ? 'border-red-oracle bg-red-oracle/20' : 'border-gray-600'}`}>Red</button>
+              <button
+                type="button"
+                onClick={() => setLevel('green')}
+                className={`flex-1 p-4 rounded-lg border-2 transition-all ${
+                  level === 'green' ? 'border-green-oracle bg-green-oracle/20' : 'border-gray-600'
+                }`}
+              >
+                Green
+              </button>
+              <button
+                type="button"
+                onClick={() => setLevel('yellow')}
+                className={`flex-1 p-4 rounded-lg border-2 transition-all ${
+                  level === 'yellow' ? 'border-yellow-oracle bg-yellow-oracle/20' : 'border-gray-600'
+                }`}
+              >
+                Yellow
+              </button>
+              <button
+                type="button"
+                onClick={() => setLevel('red')}
+                className={`flex-1 p-4 rounded-lg border-2 transition-all ${
+                  level === 'red' ? 'border-red-oracle bg-red-oracle/20' : 'border-gray-600'
+                }`}
+              >
+                Red
+              </button>
             </div>
           </div>
 

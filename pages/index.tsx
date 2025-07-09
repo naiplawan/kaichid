@@ -36,14 +36,17 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           className="text-3xl font-mystical text-mystical-gold"
         >
-          Deep Talk Oracle
+          KAICHID
         </motion.h1>
         <nav className="space-x-4">
           <Link href="/auth/login" className="oracle-button">
             Sign In
           </Link>
           <Link href="/auth/register" className="oracle-button">
-            Join the Circle
+            Join KAICHID
+          </Link>
+          <Link href="/demo" className="oracle-button bg-gradient-to-r from-green-400 to-purple-500 text-white">
+            Try Demo
           </Link>
         </nav>
       </header>
@@ -118,7 +121,7 @@ export default function Home() {
           transition={{ delay: 0.8 }}
           className="mt-20 max-w-6xl mx-auto"
         >
-          <h3 className="text-3xl font-mystical mb-12 text-center text-mystical-gold">Sacred Features</h3>
+          <h3 className="text-3xl font-mystical mb-12 text-center text-mystical-gold">KAICHID Features</h3>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="text-center p-6">
               <div className="text-mystical-purple text-3xl mb-4">🎭</div>
@@ -148,7 +151,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="p-6 text-center text-gray-500 border-t border-gray-800">
-        <p>&copy; 2025 Deep Talk Oracle. Fostering authentic connections.</p>
+        <p>&copy; 2025 KAICHID. Fostering authentic connections.</p>
       </footer>
     </div>
   );

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/router';
@@ -37,7 +36,7 @@ export default function Journal() {
           questions (*)
         `
         )
-        .eq('user_id', user.uid)
+        .eq('user_id', user.id)
         .order('saved_at', { ascending: false });
 
       if (error) {
@@ -61,6 +60,14 @@ export default function Journal() {
         return 'level-red';
       default:
         return 'level-green';
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!user) return;
+    const { error } = await supabase.from('saved_questions').delete().eq('id', id).eq('user_id', user.id);
+    if (!error) {
+      setInsights((prev) => prev.filter((insight) => insight.id !== id));
     }
   };
 
@@ -104,7 +111,9 @@ export default function Journal() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className={`mystical-card p-6 ${insight.questions.length > 0 ? getLevelClass(insight.questions[0].level) : ''}`}
+                className={`mystical-card p-6 ${
+                  insight.questions.length > 0 ? getLevelClass(insight.questions[0].level) : ''
+                }`}
               >
                 {insight.questions.length > 0 && (
                   <div className="flex justify-between items-start">
@@ -135,6 +144,13 @@ export default function Journal() {
                     <p className="text-gray-200 whitespace-pre-wrap">{insight.response}</p>
                   </div>
                 )}
+
+                <button
+                  onClick={() => handleDelete(insight.id)}
+                  className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                >
+                  Remove from Journal
+                </button>
               </motion.div>
             ))}
           </div>

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
@@ -25,7 +24,7 @@ export default function JoinRoom() {
         className="mystical-card p-8 w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-mystical text-mystical-gold mb-2">Join a Sacred Circle</h1>
+          <h1 className="text-3xl font-mystical text-mystical-gold mb-2">Join a KAICHID Circle</h1>
           <p className="text-gray-400">Enter the 6-digit code to join your friends.</p>
         </div>
 

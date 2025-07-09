@@ -1,38 +1,42 @@
 {
-  "name": "deep-talk-card-game",
+  "name": "kaichid-cardgame",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@9.0.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "server:dev": "ts-node-dev server/index.ts"
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf .next",
+    "postinstall": "prisma generate || echo 'Prisma not configured yet'"
   },
-  "packageManager": "pnpm@8.0.0",
   "dependencies": {
-    "next": "14.0.0",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "socket.io": "^4.7.5",
-    "socket.io-client": "^4.7.5",
+    "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.39.0",
-    "firebase": "^10.7.1",
-    "framer-motion": "^10.16.16",
-    "react-spring": "^9.7.3",
-    "react-use-gesture": "^9.1.3",
-    "tailwindcss": "^3.3.6",
-    "autoprefixer": "^10.4.16",
-    "postcss": "^8.4.32",
-    "uuid": "^9.0.1",
-    "@types/uuid": "^9.0.7"
+    "framer-motion": "^11.0.0",
+    "lucide-react": "^0.525.0",
+    "next": "^14.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "typescript": "^5.2.2",
-    "@types/node": "^20.9.0",
-    "@types/react": "^18.2.37",
-    "@types/react-dom": "^18.2.15",
-    "eslint": "^8.53.0",
-    "eslint-config-next": "14.0.0"
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "@types/uuid": "^9.0.7",
+    "autoprefixer": "^10.4.17",
+    "eslint": "^9.30.1",
+    "eslint-config-next": "^15.3.5",
+    "postcss": "^8.4.33",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
   }
 }

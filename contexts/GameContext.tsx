@@ -26,7 +26,7 @@ interface GameContextType {
   setGameMode: (mode: 'solo' | 'multiplayer') => void;
   setLevel: (level: 'green' | 'yellow' | 'red') => void;
   setCurrentQuestion: (question: Question | null) => void;
-  saveQuestion: (question: Question, response?: string) => void;
+  saveQuestion: (question: Question, response?: string, privacy?: 'private' | 'shared') => void;
   markQuestionPlayed: (questionId: string) => void;
   resetGame: () => void;
   setRoom: (room: any) => void;
@@ -72,15 +72,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { user } = useAuth();
 
   const saveQuestion = useCallback(
-    async (question: Question, response?: string) => {
+    async (question: Question, response?: string, privacy: 'private' | 'shared' = 'private') => {
       if (!user) return;
 
       const { data, error } = await supabase.from('saved_questions').insert([
         {
-          user_id: user.uid,
+          user_id: user.id,
           question_id: question.id,
           response: response,
-          privacy: 'private',
+          privacy: privacy,
         },
       ]);
 

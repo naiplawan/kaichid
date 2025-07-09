@@ -1,16 +1,17 @@
-
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSocket } from '@/contexts/SocketContext';
 import { useGame } from '@/contexts/GameContext';
-import { supabase, Question, GameRoom } from '@/lib/supabase';
-import Card from '@/components/Card';
+import { supabase, Question, GameRoom, RoomPlayer, GameSession } from '@/lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
-interface Player {
-  id: string;
-  username: string;
+interface MultiplayerGameState {
+  phase: 'waiting' | 'playing' | 'answering' | 'reviewing' | 'finished';
+  currentQuestion: Question | null;
+  currentRound: number;
+  totalRounds: number;
+  timeRemaining: number;
 }
 
 export default function MultiplayerRoom() {
@@ -18,62 +19,272 @@ export default function MultiplayerRoom() {
   const { roomCode } = router.query;
 
   const { user } = useAuth();
-  const { socket, joinRoom, sendMessage } = useSocket();
-  const { gameState, setRoom } = useGame();
+  const { gameState } = useGame();
 
-  const [room, setLocalRoom] = useState<GameRoom | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [room, setRoom] = useState<GameRoom | null>(null);
+  const [players, setPlayers] = useState<RoomPlayer[]>([]);
+  const [gameSession, setGameSession] = useState<GameSession | null>(null);
+  const [multiplayerState, setMultiplayerState] = useState<MultiplayerGameState>({
+    phase: 'waiting',
+    currentQuestion: null,
+    currentRound: 1,
+    totalRounds: 5,
+    timeRemaining: 0,
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [gameStarted, setGameStarted] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
+  const [currentResponse, setCurrentResponse] = useState('');
+  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
+  const [isRoomCreator, setIsRoomCreator] = useState(false);
 
-  useEffect(() => {
-    if (!roomCode || !user) return;
+  // Join room function
+  const joinRoom = useCallback(async () => {
+    if (!user || !room) return;
 
-    const fetchRoom = async () => {
-      const { data, error } = await supabase
-        .from('game_rooms')
+    setIsJoining(true);
+    try {
+      // Check if user is already in the room
+      const { data: existingPlayer } = await supabase
+        .from('room_players')
         .select('*')
-        .eq('room_code', roomCode)
+        .eq('room_id', room.id)
+        .eq('user_id', user.id)
         .single();
 
-      if (error || !data) {
-        setError('Room not found.');
-        setLoading(false);
+      if (!existingPlayer) {
+        // Add user to room
+        const { error: joinError } = await supabase.from('room_players').insert({
+          room_id: room.id,
+          user_id: user.id,
+          username: user.user_metadata?.username || user.email?.split('@')[0] || 'Anonymous',
+        });
+
+        if (joinError) {
+          setError('Failed to join room');
+          return;
+        }
+      } else {
+        // Update last_seen for existing player
+        await supabase
+          .from('room_players')
+          .update({ last_seen: new Date().toISOString(), is_active: true })
+          .eq('id', existingPlayer.id);
+      }
+
+      // Update current_players count
+      const { data: currentPlayers } = await supabase
+        .from('room_players')
+        .select('id')
+        .eq('room_id', room.id)
+        .eq('is_active', true);
+
+      await supabase
+        .from('game_rooms')
+        .update({ current_players: currentPlayers?.length || 0 })
+        .eq('id', room.id);
+    } catch (err) {
+      console.error('Error joining room:', err);
+      setError('Failed to join room');
+    } finally {
+      setIsJoining(false);
+    }
+  }, [user, room]);
+
+  // Start game function (only for room creator)
+  const startGame = useCallback(async () => {
+    if (!user || !room || !isRoomCreator) return;
+
+    try {
+      // Create game session
+      const { data: session, error: sessionError } = await supabase
+        .from('game_sessions')
+        .insert({
+          room_id: room.id,
+          total_rounds: room.settings?.rounds || 5,
+        })
+        .select()
+        .single();
+
+      if (sessionError) {
+        setError('Failed to start game');
         return;
       }
 
-      setLocalRoom(data);
-      setRoom(data);
-      joinRoom(roomCode as string);
-      setLoading(false);
-    };
+      // Update room status
+      await supabase.from('game_rooms').update({ status: 'playing' }).eq('id', room.id);
+    } catch (err) {
+      console.error('Error starting game:', err);
+      setError('Failed to start game');
+    }
+  }, [user, room, isRoomCreator]);
 
-    fetchRoom();
-  }, [roomCode, user, joinRoom, setRoom]);
+  // Leave room function
+  const leaveRoom = useCallback(async () => {
+    if (!user || !room) return;
 
+    try {
+      await supabase.from('room_players').delete().eq('room_id', room.id).eq('user_id', user.id);
+
+      router.push('/dashboard');
+    } catch (err) {
+      console.error('Error leaving room:', err);
+    }
+  }, [user, room, router]);
+
+  // Heartbeat to keep player active
   useEffect(() => {
-    if (!socket) return;
+    if (!user || !room) return;
 
-    socket.on('update_players', (updatedPlayers: Player[]) => {
-      setPlayers(updatedPlayers);
-    });
+    const heartbeat = setInterval(async () => {
+      await supabase.rpc('update_player_last_seen', {
+        p_room_id: room.id,
+        p_user_id: user.id,
+      });
+    }, 30000); // Every 30 seconds
 
-    socket.on('game_started', () => {
-      setGameStarted(true);
-    });
+    return () => clearInterval(heartbeat);
+  }, [user, room]);
+
+  // Setup realtime subscriptions
+  useEffect(() => {
+    if (!room || !user) return;
+
+    // Create realtime channel for this room
+    const roomChannel = supabase
+      .channel(`room:${room.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${room.id}` },
+        async () => {
+          // Refresh players list
+          const { data } = await supabase
+            .from('room_players')
+            .select('*')
+            .eq('room_id', room.id)
+            .eq('is_active', true)
+            .order('joined_at');
+
+          if (data) setPlayers(data);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'game_rooms', filter: `id=eq.${room.id}` },
+        async () => {
+          // Refresh room data
+          const { data } = await supabase.from('game_rooms').select('*').eq('id', room.id).single();
+
+          if (data) setRoom(data);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'game_sessions', filter: `room_id=eq.${room.id}` },
+        async () => {
+          // Refresh game session
+          const { data } = await supabase
+            .from('game_sessions')
+            .select('*')
+            .eq('room_id', room.id)
+            .eq('status', 'active')
+            .single();
+
+          if (data) {
+            setGameSession(data);
+            setMultiplayerState((prev) => ({
+              ...prev,
+              phase: 'playing',
+              currentRound: data.current_round,
+              totalRounds: data.total_rounds,
+            }));
+          }
+        }
+      )
+      .subscribe();
+
+    setChannel(roomChannel);
 
     return () => {
-      socket.off('update_players');
-      socket.off('game_started');
+      roomChannel.unsubscribe();
     };
-  }, [socket]);
+  }, [room, user]);
 
-  const handleStartGame = () => {
-    if (socket && room) {
-      sendMessage('start_game', { roomCode });
+  // Initial data fetch
+  useEffect(() => {
+    if (!user) {
+      router.push('/auth/login');
+      return;
     }
-  };
+
+    if (!roomCode || typeof roomCode !== 'string') {
+      setError('Invalid room code');
+      setLoading(false);
+      return;
+    }
+
+    const fetchRoomData = async () => {
+      try {
+        // Fetch room data
+        const { data: roomData, error: roomError } = await supabase
+          .from('game_rooms')
+          .select('*')
+          .eq('room_code', roomCode)
+          .single();
+
+        if (roomError) {
+          setError('Room not found');
+          setLoading(false);
+          return;
+        }
+
+        setRoom(roomData);
+        setIsRoomCreator(roomData.creator_id === user.id);
+
+        // Fetch players
+        const { data: playersData } = await supabase
+          .from('room_players')
+          .select('*')
+          .eq('room_id', roomData.id)
+          .eq('is_active', true)
+          .order('joined_at');
+
+        if (playersData) setPlayers(playersData);
+
+        // Check for active game session
+        const { data: sessionData } = await supabase
+          .from('game_sessions')
+          .select('*')
+          .eq('room_id', roomData.id)
+          .eq('status', 'active')
+          .single();
+
+        if (sessionData) {
+          setGameSession(sessionData);
+          setMultiplayerState((prev) => ({
+            ...prev,
+            phase: 'playing',
+            currentRound: sessionData.current_round,
+            totalRounds: sessionData.total_rounds,
+          }));
+        }
+      } catch (err) {
+        console.error('Error fetching room data:', err);
+        setError('Failed to load room');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRoomData();
+  }, [roomCode, user, router]);
+
+  // Auto-join room if not already joined
+  useEffect(() => {
+    if (room && user && !loading && !players.find((p) => p.user_id === user.id)) {
+      joinRoom();
+    }
+  }, [room, user, loading, players, joinRoom]);
 
   if (loading) {
     return (
@@ -85,240 +296,153 @@ export default function MultiplayerRoom() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-center">
-        <div>
-          <h1 className="text-2xl text-red-500">{error}</h1>
-          <button onClick={() => router.push('/dashboard')} className="mt-4 oracle-button">
-            Back to Dashboard
+      <div className="min-h-screen flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="mystical-card p-8 text-center"
+        >
+          <h1 className="text-2xl font-mystical text-red-400 mb-4">Error</h1>
+          <p className="text-gray-300 mb-6">{error}</p>
+          <button onClick={() => router.push('/dashboard')} className="btn-primary">
+            Return to Dashboard
           </button>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      <header className="p-6 flex justify-between items-center border-b border-gray-800">
-        <h1 className="text-xl font-mystical text-mystical-gold">Sacred Circle</h1>
-        <div className="text-center">
-          <p className="text-gray-400">Room Code</p>
-          <p className="text-2xl font-bold tracking-widest">{roomCode}</p>
-        </div>
-        <button onClick={() => router.push('/dashboard')} className="text-gray-400 hover:text-mystical-gold">
-          Leave Circle
-        </button>
-      </header>
-
-      <main className="flex-1 flex items-center justify-center p-6">
-        {!gameStarted ? (
-          <Lobby players={players} onStartGame={handleStartGame} isHost={room?.creator_id === user?.uid} />
-        ) : (
-          <Game room={room} players={players} currentUser={user} />
-        )}
-      </main>
-    </div>
-  );
-}
-
-const Lobby = ({ players, onStartGame, isHost }: { players: Player[]; onStartGame: () => void; isHost: boolean }) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    className="mystical-card p-8 w-full max-w-2xl text-center"
-  >
-    <h2 className="text-3xl font-mystical text-mystical-gold mb-4">Lobby</h2>
-    <p className="text-gray-300 mb-8">Waiting for players to join the circle...</p>
-
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-      {players.map((player) => (
-        <div key={player.id} className="bg-gray-800/50 p-4 rounded-lg text-center">
-          <div className="text-4xl mb-2">🧘</div>
-          <p className="font-semibold truncate">{player.username}</p>
-        </div>
-      ))}
-    </div>
-
-    {isHost && (
-      <button onClick={onStartGame} className="oracle-button" disabled={players.length < 2}>
-        Start Game ({players.length} / {players.length})
-      </button>
-    )}
-    {!isHost && <p className="text-gray-400">Waiting for the host to start the game...</p>}
-  </motion.div>
-);
-
-interface GameProps {
-  room: GameRoom | null;
-  players: Player[];
-  currentUser: any; // Firebase User object
-}
-
-const Game = ({ room, players, currentUser }: GameProps) => {
-  const { socket, sendMessage } = useSocket();
-  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
-  const [currentTurnPlayerId, setCurrentTurnPlayerId] = useState<string | null>(null);
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const [responseInput, setResponseInput] = useState('');
-  const [showResponseInput, setShowResponseInput] = useState(false);
-  const [chatMessages, setChatMessages] = useState<{ player: string; message: string }[]>([]);
-
-  useEffect(() => {
-    if (!room || !socket) return;
-
-    // Fetch questions based on room settings
-    const fetchQuestions = async () => {
-      const { data, error } = await supabase
-        .from('questions')
-        .select('*')
-        .in('level', room.settings.level_progression)
-        .in('theme', room.settings.themes.length > 0 ? room.settings.themes : ['Relationships', 'Personal Growth', 'Values', 'Career', 'Fun', 'Icebreaker'])
-        .eq('status', 'approved')
-        .order('created_at', { ascending: false }); // Simple ordering for now
-
-      if (error) {
-        console.error('Error fetching questions for game:', error);
-      } else {
-        setQuestions(data || []);
-        if (data && data.length > 0) {
-          setCurrentQuestion(data[0]);
-        }
-      }
-    };
-
-    fetchQuestions();
-
-    socket.on('next_turn', (playerId: string) => {
-      setCurrentTurnPlayerId(playerId);
-      setShowResponseInput(false);
-      setResponseInput('');
-      setQuestionIndex(prev => prev + 1);
-    });
-
-    socket.on('player_response', (data: { player: string; message: string }) => {
-      setChatMessages(prev => [...prev, data]);
-    });
-
-    // Initial turn assignment (only for the host)
-    if (room.creator_id === currentUser?.uid && players.length > 0) {
-      sendMessage('assign_turn', { roomCode: room.room_code, playerId: players[0].id });
-    }
-
-    return () => {
-      socket.off('next_turn');
-      socket.off('player_response');
-    };
-  }, [room, socket, currentUser, players, sendMessage]);
-
-  useEffect(() => {
-    if (questions.length > 0 && questionIndex < questions.length) {
-      setCurrentQuestion(questions[questionIndex]);
-    } else if (questions.length > 0 && questionIndex >= questions.length) {
-      // Game over logic
-      console.log("Game Over!");
-      sendMessage('game_over', { roomCode: room?.room_code });
-    }
-  }, [questionIndex, questions, room?.room_code, sendMessage]);
-
-  const handleCardSwipe = (direction: 'left' | 'right', question: Question) => {
-    if (currentUser?.uid !== currentTurnPlayerId) return; // Only current player can swipe
-
-    if (direction === 'right') {
-      setShowResponseInput(true);
-    } else {
-      sendMessage('turn_ended', { roomCode: room?.room_code, nextPlayerId: getNextPlayerId() });
-    }
-  };
-
-  const handleSendResponse = () => {
-    if (responseInput.trim() && currentQuestion) {
-      sendMessage('send_response', { roomCode: room?.room_code, player: currentUser?.displayName || currentUser?.email, message: responseInput });
-      sendMessage('turn_ended', { roomCode: room?.room_code, nextPlayerId: getNextPlayerId() });
-    }
-  };
-
-  const getNextPlayerId = useCallback(() => {
-    const currentIndex = players.findIndex(p => p.id === currentTurnPlayerId);
-    const nextIndex = (currentIndex + 1) % players.length;
-    return players[nextIndex].id;
-  }, [players, currentTurnPlayerId]);
-
-  const isMyTurn = currentUser?.uid === currentTurnPlayerId;
+  if (!room) return null;
 
   return (
-    <div className="flex flex-col md:flex-row w-full h-full">
-      {/* Left Panel: Players & Chat */}
-      <div className="md:w-1/3 p-4 border-r border-gray-800 flex flex-col">
-        <h3 className="text-xl font-mystical text-mystical-gold mb-4">Players</h3>
-        <div className="space-y-2 mb-6">
-          {players.map((player) => (
-            <div key={player.id} className={`p-3 rounded-lg ${
-              player.id === currentTurnPlayerId ? 'bg-mystical-gold/30 border border-mystical-gold' : 'bg-gray-800/50'
-            }`}>
-              <span className="font-semibold">{player.username}</span>
-              {player.id === currentUser?.uid && <span className="text-gray-400 text-sm ml-2">(You)</span>}
-              {player.id === currentTurnPlayerId && <span className="text-mystical-gold text-sm ml-2">• Current Turn</span>}
-            </div>
-          ))}
-        </div>
-
-        <h3 className="text-xl font-mystical text-mystical-gold mb-4">Chat</h3>
-        <div className="flex-1 bg-gray-800/50 rounded-lg p-4 overflow-y-auto mb-4">
-          {chatMessages.map((msg, index) => (
-            <div key={index} className="mb-2">
-              <span className="font-semibold text-mystical-gold">{msg.player}:</span> {msg.message}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Right Panel: Card & Interaction */}
-      <div className="md:w-2/3 p-4 flex flex-col items-center justify-center">
-        {currentQuestion ? (
-          <AnimatePresence mode="wait">
-            {!showResponseInput ? (
-              <motion.div
-                key={currentQuestion.id}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Card
-                  question={currentQuestion}
-                  onSwipe={handleCardSwipe}
-                  onReport={() => { /* Reporting in multiplayer might be different */ }}
-                  disabled={!isMyTurn}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="response-input"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="mystical-card p-8 w-full max-w-xl"
-              >
-                <h3 className="text-xl font-mystical mb-4 text-mystical-gold">Your Insight</h3>
-                <p className="text-gray-300 mb-4">{currentQuestion.text}</p>
-                <textarea
-                  value={responseInput}
-                  onChange={(e) => setResponseInput(e.target.value)}
-                  placeholder="Share your thoughts with the circle..."
-                  className="w-full h-32 p-4 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-mystical-gold text-white resize-none"
-                />
-                <button onClick={handleSendResponse} className="oracle-button mt-4 w-full">
-                  Share Insight
-                </button>
-              </motion.div>
+    <div className="min-h-screen p-4">
+      {/* Room Header */}
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mystical-card p-6 mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-3xl font-mystical text-mystical-gold">Room: {room.room_code}</h1>
+          <div className="flex gap-3">
+            {isRoomCreator && room.status === 'waiting' && players.length >= 2 && (
+              <button onClick={startGame} className="btn-primary">
+                Start Game
+              </button>
             )}
-          </AnimatePresence>
-        ) : (
-          <div className="text-center text-gray-400">
-            <p>Waiting for questions...</p>
+            <button onClick={leaveRoom} className="btn-secondary">
+              Leave Room
+            </button>
           </div>
-        )}
+        </div>
+
+        <div className="flex justify-between items-center text-sm text-gray-400">
+          <span>
+            Status: <span className="text-mystical-gold capitalize">{room.status}</span>
+          </span>
+          <span>
+            Players: {players.length}/{room.max_players}
+          </span>
+          <span>Rounds: {room.settings?.rounds || 5}</span>
+        </div>
+      </motion.div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Players List */}
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="mystical-card p-6">
+          <h2 className="text-xl font-mystical text-mystical-gold mb-4">Players</h2>
+          <div className="space-y-3">
+            <AnimatePresence>
+              {players.map((player) => (
+                <motion.div
+                  key={player.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="flex items-center gap-3 p-3 bg-mystical-dark-lighter rounded-lg"
+                >
+                  <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                  <span className="text-gray-300">{player.username}</span>
+                  {player.user_id === room.creator_id && (
+                    <span className="text-xs bg-mystical-gold text-mystical-dark px-2 py-1 rounded">HOST</span>
+                  )}
+                  {player.user_id === user?.id && (
+                    <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded">YOU</span>
+                  )}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+
+          {room.status === 'waiting' && players.length < 2 && (
+            <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <p className="text-yellow-400 text-sm">Waiting for more players to join...</p>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Game Area */}
+        <div className="lg:col-span-2">
+          {room.status === 'waiting' && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mystical-card p-8 text-center"
+            >
+              <h2 className="text-2xl font-mystical text-mystical-gold mb-4">Waiting for Game to Start</h2>
+              <p className="text-gray-300 mb-6">
+                {isRoomCreator
+                  ? `You can start the game when you have at least 2 players (${players.length}/2)`
+                  : 'The host will start the game soon...'}
+              </p>
+
+              <div className="grid grid-cols-2 gap-4 text-left max-w-md mx-auto">
+                <div>
+                  <h3 className="font-medium text-mystical-gold mb-2">Game Settings</h3>
+                  <ul className="text-sm text-gray-400 space-y-1">
+                    <li>• Rounds: {room.settings?.rounds || 5}</li>
+                    <li>• Themes: {room.settings?.themes?.join(', ') || 'Mixed'}</li>
+                    <li>• Levels: {room.settings?.level_progression?.join(' → ') || 'Progressive'}</li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="font-medium text-mystical-gold mb-2">How to Play</h3>
+                  <ul className="text-sm text-gray-400 space-y-1">
+                    <li>• Answer questions together</li>
+                    <li>• Share your thoughts</li>
+                    <li>• Learn about each other</li>
+                  </ul>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {room.status === 'playing' && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mystical-card p-8"
+            >
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-mystical text-mystical-gold">
+                    Round {multiplayerState.currentRound} of {multiplayerState.totalRounds}
+                  </h2>
+                </div>
+
+                <div className="text-center p-6 bg-mystical-dark-lighter rounded-lg">
+                  <p className="text-gray-300 text-lg leading-relaxed">
+                    Multiplayer gameplay is currently being enhanced with Supabase Realtime.
+                    <br />
+                    <span className="text-yellow-400 font-semibold">
+                      Demo: Turn-based play, chat, and wildcards coming soon!
+                    </span>
+                  </p>
+                  <p className="text-gray-400 mt-4">
+                    The foundation is ready - questions, responses, and real-time updates are all set up.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </div>
       </div>
     </div>
   );
-};
+}

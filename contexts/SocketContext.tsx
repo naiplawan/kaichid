@@ -1,77 +1,122 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from './AuthContext';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
-interface SocketContextType {
-  socket: Socket | null;
+interface RealtimeContextType {
+  channel: RealtimeChannel | null;
   connected: boolean;
   joinRoom: (roomCode: string) => void;
   leaveRoom: () => void;
   sendMessage: (event: string, data: any) => void;
+  subscribeToRoom: (roomCode: string, callback: (payload: any) => void) => void;
 }
 
-const SocketContext = createContext<SocketContextType | undefined>(undefined);
+const RealtimeContext = createContext<RealtimeContextType | undefined>(undefined);
 
-export const useSocket = () => {
-  const context = useContext(SocketContext);
+export const useRealtime = () => {
+  const context = useContext(RealtimeContext);
   if (context === undefined) {
-    throw new Error('useSocket must be used within a SocketProvider');
+    throw new Error('useRealtime must be used within a RealtimeProvider');
   }
   return context;
 };
 
-export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [socket, setSocket] = useState<Socket | null>(null);
+// For backward compatibility, export as useSocket
+export const useSocket = useRealtime;
+
+export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const [connected, setConnected] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
-    // Initialize socket connection
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
-    const newSocket = io(socketUrl);
-
-    newSocket.on('connect', () => {
+    if (user) {
       setConnected(true);
-      console.log('Connected to socket server');
-    });
-
-    newSocket.on('disconnect', () => {
+    } else {
       setConnected(false);
-      console.log('Disconnected from socket server');
-    });
-
-    setSocket(newSocket);
-
-    return () => {
-      newSocket.disconnect();
-    };
-  }, []);
+      if (channel) {
+        channel.unsubscribe();
+        setChannel(null);
+      }
+    }
+  }, [user, channel]);
 
   const joinRoom = (roomCode: string) => {
-    if (socket && user) {
-      socket.emit('join_room', { roomCode, userId: user.uid });
+    if (user && !channel) {
+      const newChannel = supabase.channel(`room-${roomCode}`, {
+        config: {
+          broadcast: { self: true },
+          presence: { key: user.id },
+        },
+      });
+
+      newChannel
+        .on('presence', { event: 'sync' }, () => {
+          console.log('Presence synced');
+        })
+        .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+          console.log('User joined:', key, newPresences);
+        })
+        .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+          console.log('User left:', key, leftPresences);
+        })
+        .on('broadcast', { event: 'game-event' }, (payload) => {
+          console.log('Game event received:', payload);
+        })
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            // Track user presence
+            await newChannel.track({
+              user_id: user.id,
+              username: user.email?.split('@')[0] || 'Anonymous',
+              online_at: new Date().toISOString(),
+            });
+          }
+        });
+
+      setChannel(newChannel);
     }
   };
 
   const leaveRoom = () => {
-    if (socket) {
-      socket.emit('leave_room');
+    if (channel) {
+      channel.unsubscribe();
+      setChannel(null);
     }
   };
 
   const sendMessage = (event: string, data: any) => {
-    if (socket) {
-      socket.emit(event, data);
+    if (channel) {
+      channel.send({
+        type: 'broadcast',
+        event: 'game-event',
+        payload: { event, data, user_id: user?.id },
+      });
+    }
+  };
+
+  const subscribeToRoom = (roomCode: string, callback: (payload: any) => void) => {
+    if (user) {
+      const roomChannel = supabase.channel(`room-${roomCode}`);
+
+      roomChannel.on('broadcast', { event: 'game-event' }, callback).subscribe();
+
+      return () => roomChannel.unsubscribe();
     }
   };
 
   const value = {
-    socket,
+    channel,
     connected,
     joinRoom,
     leaveRoom,
     sendMessage,
+    subscribeToRoom,
   };
 
-  return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
+  return <RealtimeContext.Provider value={value}>{children}</RealtimeContext.Provider>;
 };
+
+// For backward compatibility, export as SocketProvider
+export const SocketProvider = RealtimeProvider;

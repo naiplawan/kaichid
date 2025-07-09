@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/router';
@@ -18,9 +17,7 @@ export default function CreateRoom() {
   const [themes, setThemes] = useState<string[]>([]);
 
   const handleThemeChange = (theme: string) => {
-    setThemes((prev) =>
-      prev.includes(theme) ? prev.filter((t) => t !== theme) : [...prev, theme]
-    );
+    setThemes((prev) => (prev.includes(theme) ? prev.filter((t) => t !== theme) : [...prev, theme]));
   };
 
   const handleCreateRoom = async () => {
@@ -39,7 +36,7 @@ export default function CreateRoom() {
       {
         id: roomId,
         room_code: roomCode,
-        creator_id: user.uid,
+        creator_id: user.id,
         max_players: maxPlayers,
         settings: {
           rounds,
@@ -66,7 +63,7 @@ export default function CreateRoom() {
         className="mystical-card p-8 w-full max-w-2xl"
       >
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-mystical text-mystical-gold mb-2">Create a Sacred Circle</h1>
+          <h1 className="text-3xl font-mystical text-mystical-gold mb-2">Create a KAICHID Circle</h1>
           <p className="text-gray-400">Set the intentions for your group conversation.</p>
         </div>
 

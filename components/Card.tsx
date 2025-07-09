@@ -1,5 +1,8 @@
+'use client';
+
 import { useState, useRef } from 'react';
-import { motion, useAnimation, PanInfo } from 'framer-motion';
+import { motion, useAnimation, type PanInfo } from 'framer-motion';
+import { Flag } from 'lucide-react'; // Import Lucide icon
 import { Question } from '@/lib/supabase';
 
 interface CardProps {
@@ -29,7 +32,7 @@ export default function Card({ question, onSwipe, onReport, disabled = false }: 
       controls
         .start({
           x: direction === 'right' ? 1000 : -1000,
-          rotate: direction === 'right' ? 30 : -30,
+          rotate: direction === 'right' ? 10 : -10,
           opacity: 0,
           transition: { duration: 0.3 },
         })
@@ -64,29 +67,16 @@ export default function Card({ question, onSwipe, onReport, disabled = false }: 
     }
   };
 
-  const getLevelClass = () => {
-    switch (question.level) {
-      case 'green':
-        return 'level-green';
-      case 'yellow':
-        return 'level-yellow';
-      case 'red':
-        return 'level-red';
-      default:
-        return 'level-green';
-    }
-  };
-
   const getLevelColor = () => {
     switch (question.level) {
       case 'green':
-        return '#10b981';
+        return '#6EE7B7'; // Emerald-300 for a subtle glow
       case 'yellow':
-        return '#f59e0b';
+        return '#FCD34D'; // Amber-300
       case 'red':
-        return '#ef4444';
+        return '#F87171'; // Red-400
       default:
-        return '#10b981';
+        return '#6EE7B7';
     }
   };
 
@@ -94,7 +84,7 @@ export default function Card({ question, onSwipe, onReport, disabled = false }: 
     <div className="relative w-full h-full flex items-center justify-center">
       <motion.div
         ref={cardRef}
-        className={`mystical-card w-80 h-96 p-8 cursor-grab active:cursor-grabbing select-none ${getLevelClass()}`}
+        className={`glass-card w-80 h-96 p-8 cursor-grab active:cursor-grabbing select-none`}
         drag={!disabled ? 'x' : false}
         dragConstraints={{ left: 0, right: 0 }}
         onDrag={handleDrag}
@@ -104,54 +94,51 @@ export default function Card({ question, onSwipe, onReport, disabled = false }: 
         whileInView={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         style={{
-          borderColor: getLevelColor(),
-          boxShadow: `0 0 30px ${getLevelColor()}20`,
+          borderColor: getLevelColor(), // Border color based on level
+          boxShadow: `0 8px 32px 0 rgba(31, 38, 135, 0.37), 0 0 40px ${getLevelColor()}20`, // Glassmorphism shadow + subtle glow
         }}
       >
-        {/* Card Border Design */}
-        <div className="absolute inset-2 border border-mystical-gold/30 rounded-md"></div>
-        <div className="absolute inset-4 border border-mystical-gold/20 rounded-sm"></div>
-
-        {/* Level Indicator */}
+        {/* Level Indicator - now a simple glowing dot */}
         <div className="absolute top-4 right-4">
           <div
-            className="w-4 h-4 rounded-full border-2"
-            style={{ borderColor: getLevelColor(), backgroundColor: `${getLevelColor()}40` }}
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: getLevelColor(), boxShadow: `0 0 10px ${getLevelColor()}` }}
           ></div>
         </div>
 
         {/* Question Content */}
         <div className="h-full flex flex-col justify-center items-center text-center relative z-10">
           <div className="mb-4">
-            <span className="text-sm font-mystical tracking-wider uppercase opacity-60">
+            <span className="text-sm font-modern-sans tracking-wider uppercase text-gray-300 opacity-80">
               {question.level} • {question.theme}
             </span>
           </div>
-
-          <h3 className="text-lg font-oracle leading-relaxed text-white mb-6">{question.text}</h3>
-
-          <div className="text-xs text-gray-400 absolute bottom-0">Swipe right for insight • Swipe left to skip</div>
+          <h3 className="text-xl font-modern-heading leading-relaxed text-white mb-6">{question.text}</h3>
+          <div className="text-xs text-gray-400 absolute bottom-0 opacity-70">
+            Swipe right for insight • Swipe left to skip
+          </div>
         </div>
 
         {/* Swipe Feedback */}
         {showFeedback && (
-          <div className={`swipe-feedback ${swipeDirection === 'right' ? 'insight-feedback' : 'skip-feedback'}`}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.2 }}
+            className={`swipe-feedback ${swipeDirection === 'right' ? 'insight-feedback' : 'skip-feedback'}`}
+          >
             {swipeDirection === 'right' ? 'INSIGHT' : 'SKIP'}
-          </div>
+          </motion.div>
         )}
 
-        {/* Mystical Elements */}
-        <div className="absolute top-6 left-6 text-mystical-gold opacity-30">✦</div>
-        <div className="absolute bottom-6 right-6 text-mystical-gold opacity-30">✦</div>
-        <div className="absolute top-1/3 left-2 text-mystical-gold opacity-20 text-xs">◆</div>
-        <div className="absolute bottom-1/3 right-2 text-mystical-gold opacity-20 text-xs">◆</div>
-
         {/* Report Button */}
-        <button 
-            onClick={() => onReport(question.id)}
-            className="absolute bottom-4 left-4 text-xs text-gray-500 hover:text-red-500 transition-colors"
+        <button
+          onClick={() => onReport(question.id)}
+          className="absolute bottom-4 left-4 text-xs text-gray-400 hover:text-red-400 transition-colors flex items-center gap-1 opacity-80 hover:opacity-100"
         >
-            Report
+          <Flag size={14} />
+          Report
         </button>
       </motion.div>
     </div>

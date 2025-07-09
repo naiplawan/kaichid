@@ -3,8 +3,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -43,16 +41,6 @@ export default function Register() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
-    } catch (error: any) {
-      setError(error.message || 'Failed to sign in with Google');
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
       <motion.div
@@ -61,7 +49,7 @@ export default function Register() {
         className="mystical-card p-8 w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-mystical text-mystical-gold mb-2">Join the Circle</h1>
+          <h1 className="text-3xl font-mystical text-mystical-gold mb-2">Join KAICHID</h1>
           <p className="text-gray-400">Begin your journey of connection</p>
         </div>
 
@@ -135,23 +123,9 @@ export default function Register() {
             disabled={loading}
             className="w-full oracle-button py-3 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Creating Account...' : 'Join the Circle'}
+            {loading ? 'Creating Account...' : 'Join KAICHID'}
           </button>
         </form>
-
-        <div className="my-6 flex items-center">
-            <div className="flex-grow border-t border-gray-600"></div>
-            <span className="mx-4 text-gray-400">OR</span>
-            <div className="flex-grow border-t border-gray-600"></div>
-        </div>
-
-        <button
-            onClick={handleGoogleSignIn}
-            className="w-full flex items-center justify-center space-x-2 border border-gray-600 text-gray-300 px-6 py-3 rounded-full hover:border-mystical-gold hover:text-mystical-gold transition-all"
-        >
-            <img src="https://www.google.com/favicon.ico" alt="Google icon" className="w-5 h-5" />
-            <span>Sign up with Google</span>
-        </button>
 
         <div className="mt-6 text-center">
           <p className="text-gray-400">
