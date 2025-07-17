@@ -112,29 +112,29 @@ export default function Journal() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 className={`mystical-card p-6 ${
-                  insight.questions.length > 0 ? getLevelClass(insight.questions[0].level) : ''
+                  insight.questions.length > 0 ? getLevelClass(insight.questions[0]?.level || 'green') : ''
                 }`}
               >
                 {insight.questions.length > 0 && (
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-sm text-gray-400 mb-2">
-                        {new Date(insight.saved_at).toLocaleDateString()} • {insight.questions[0].theme}
+                        {new Date(insight.saved_at).toLocaleDateString()} • {insight.questions[0]?.theme}
                       </p>
                       <h3 className="text-lg font-oracle leading-relaxed text-white mb-4">
-                        {insight.questions[0].text}
+                        {insight.questions[0]?.text}
                       </h3>
                     </div>
                     <div
                       className={`px-3 py-1 text-sm rounded-full border ${
-                        insight.questions[0].level === 'green'
+                        insight.questions[0]?.level === 'green'
                           ? 'border-green-oracle text-green-oracle'
-                          : insight.questions[0].level === 'yellow'
+                          : insight.questions[0]?.level === 'yellow'
                           ? 'border-yellow-oracle text-yellow-oracle'
                           : 'border-red-oracle text-red-oracle'
                       }`}
                     >
-                      {insight.questions[0].level}
+                      {insight.questions[0]?.level}
                     </div>
                   </div>
                 )}

@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -22,7 +23,7 @@ export default function Home() {
   if (!mounted || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-mystical-gold"></div>
+        <LoadingSpinner size="lg" text="Awakening the mystical forces..." />
       </div>
     );
   }

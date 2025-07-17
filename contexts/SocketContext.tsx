@@ -22,9 +22,6 @@ export const useRealtime = () => {
   return context;
 };
 
-// For backward compatibility, export as useSocket
-export const useSocket = useRealtime;
-
 export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const [connected, setConnected] = useState(false);
@@ -104,6 +101,7 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       return () => roomChannel.unsubscribe();
     }
+    return () => {};
   };
 
   const value = {
@@ -117,6 +115,3 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   return <RealtimeContext.Provider value={value}>{children}</RealtimeContext.Provider>;
 };
-
-// For backward compatibility, export as SocketProvider
-export const SocketProvider = RealtimeProvider;

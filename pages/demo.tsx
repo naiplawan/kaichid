@@ -159,7 +159,7 @@ export default function Demo() {
       setShowResponse(true);
       if (currentStep === 'solo') {
         // Use mock user response if available
-        const mockResponse = currentMockUser?.responses[currentQuestion.id];
+        const mockResponse = currentMockUser && currentQuestion?.id ? currentMockUser.responses[currentQuestion.id] : null;
         setSampleResponse(
           mockResponse ||
             "I feel most authentic when I'm working on creative projects late at night, when the world is quiet and I can truly focus on expressing my ideas without judgment."
@@ -172,11 +172,11 @@ export default function Demo() {
 
   const simulateMultiplayerResponse = () => {
     const currentPlayerName = players[currentPlayer];
-    const mockUser = mockUsers.find((user) => user.name.startsWith(currentPlayerName));
-    if (mockUser && mockUser.responses[currentQuestion.id]) {
+    const mockUser = mockUsers.find((user) => user.name.startsWith(currentPlayerName || ''));
+    if (mockUser && currentQuestion?.id && mockUser.responses[currentQuestion.id]) {
       setMockUserResponses((prev) => ({
         ...prev,
-        [mockUser.id]: mockUser.responses[currentQuestion.id],
+        [mockUser.id]: mockUser.responses[currentQuestion.id] || '',
       }));
     }
     setTimeout(() => {
@@ -380,21 +380,21 @@ export default function Demo() {
 
                 {/* Question Card */}
                 <motion.div
-                  key={currentQuestion.id}
+                  key={currentQuestion?.id}
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className={`mystical-card p-8 text-center mb-8 border-2 ${getLevelBorder(currentQuestion.level)}`}
+                  className={`mystical-card p-8 text-center mb-8 border-2 ${getLevelBorder(currentQuestion?.level || 'green')}`}
                   style={{ minHeight: '300px' }}
                 >
                   <div
                     className={`inline-block px-4 py-2 rounded-full text-sm font-semibold mb-4 bg-gradient-to-r ${getLevelColor(
-                      currentQuestion.level
+                      currentQuestion?.level || 'green'
                     )} text-white`}
                   >
-                    {currentQuestion.level.toUpperCase()} • {currentQuestion.theme}
+                    {currentQuestion?.level?.toUpperCase()} • {currentQuestion?.theme}
                   </div>
 
-                  <h3 className="text-2xl font-oracle text-white mb-6 leading-relaxed">{currentQuestion.text}</h3>
+                  <h3 className="text-2xl font-oracle text-white mb-6 leading-relaxed">{currentQuestion?.text}</h3>
 
                   <div className="flex justify-center gap-8">
                     <button
@@ -497,21 +497,21 @@ export default function Demo() {
 
                 {/* Question Card */}
                 <motion.div
-                  key={`mp-${currentQuestion.id}`}
+                  key={`mp-${currentQuestion?.id}`}
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className={`mystical-card p-8 text-center mb-8 border-2 ${getLevelBorder(currentQuestion.level)}`}
+                  className={`mystical-card p-8 text-center mb-8 border-2 ${getLevelBorder(currentQuestion?.level || 'green')}`}
                   style={{ minHeight: '300px' }}
                 >
                   <div
                     className={`inline-block px-4 py-2 rounded-full text-sm font-semibold mb-4 bg-gradient-to-r ${getLevelColor(
-                      currentQuestion.level
+                      currentQuestion?.level || 'green'
                     )} text-white`}
                   >
-                    {currentQuestion.level.toUpperCase()} • {currentQuestion.theme}
+                    {currentQuestion?.level?.toUpperCase()} • {currentQuestion?.theme}
                   </div>
 
-                  <h3 className="text-2xl font-oracle text-white mb-6 leading-relaxed">{currentQuestion.text}</h3>
+                  <h3 className="text-2xl font-oracle text-white mb-6 leading-relaxed">{currentQuestion?.text}</h3>
 
                   {currentPlayer === 0 ? (
                     <div className="flex justify-center gap-8">

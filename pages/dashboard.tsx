@@ -4,6 +4,7 @@ import { useGame } from '@/contexts/GameContext';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -29,7 +30,7 @@ export default function Dashboard() {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-mystical-gold"></div>
+        <LoadingSpinner size="lg" text="Entering the KAICHID realm..." />
       </div>
     );
   }

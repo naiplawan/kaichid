@@ -9,7 +9,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { level, theme, exclude } = req.query;
 
-    let query = supabase.from('questions').select('*').eq('status', 'approved').limit(50);
+    let query = supabase
+      .from('questions')
+      .select('id, text, level, theme, is_custom, created_at, status, reported_count')
+      .eq('status', 'approved')
+      .limit(50);
 
     if (level && typeof level === 'string') {
       query = query.eq('level', level);

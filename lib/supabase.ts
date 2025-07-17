@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
+import { env } from './env';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Client-side Supabase client with optimized settings
 export const supabase = createClient(supabaseUrl, supabaseKey, {
@@ -19,8 +20,8 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 
 // Service role client for server-side operations (used in API routes)
 export const supabaseAdmin =
-  typeof window === 'undefined' && process.env.SUPABASE_SERVICE_KEY
-    ? createClient(supabaseUrl, process.env.SUPABASE_SERVICE_KEY!, {
+  typeof window === 'undefined' && env.SUPABASE_SERVICE_KEY
+    ? createClient(supabaseUrl, env.SUPABASE_SERVICE_KEY, {
         auth: {
           autoRefreshToken: false,
           persistSession: false,

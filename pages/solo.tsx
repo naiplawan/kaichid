@@ -31,7 +31,7 @@ export default function Solo() {
     const fetchQuestions = async () => {
       const { data, error } = await supabase
         .from('questions')
-        .select('*')
+        .select('id, text, level, theme, is_custom, created_at, status, reported_count')
         .eq('level', selectedLevel)
         .eq('status', 'approved');
 

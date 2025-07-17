@@ -2,7 +2,8 @@ import '@/styles/globals.css';
 import type { AppProps } from 'next/app';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { GameProvider } from '@/contexts/GameContext';
-import { SocketProvider } from '@/contexts/SocketContext';
+import { RealtimeProvider } from '@/contexts/SocketContext';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import Head from 'next/head';
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -20,13 +21,15 @@ export default function App({ Component, pageProps }: AppProps) {
           rel="stylesheet"
         />
       </Head>
-      <AuthProvider>
-        <SocketProvider>
-          <GameProvider>
-            <Component {...pageProps} />
-          </GameProvider>
-        </SocketProvider>
-      </AuthProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <RealtimeProvider>
+            <GameProvider>
+              <Component {...pageProps} />
+            </GameProvider>
+          </RealtimeProvider>
+        </AuthProvider>
+      </ErrorBoundary>
     </>
   );
 }
