@@ -1,7 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase';
+import { withAuth, AuthenticatedRequest } from '@/lib/auth-middleware';
+import { savedQuestionSchema, createApiResponse, createApiError, withValidation } from '@/lib/validation';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     return getSavedQuestions(req, res);
   } else if (req.method === 'POST') {
@@ -9,17 +11,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } else if (req.method === 'DELETE') {
     return deleteSavedQuestion(req, res);
   } else {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json(createApiError('METHOD_NOT_ALLOWED', 'Method not allowed'));
   }
 }
 
-async function getSavedQuestions(req: NextApiRequest, res: NextApiResponse) {
+async function getSavedQuestions(req: AuthenticatedRequest, res: NextApiResponse) {
   try {
-    const { user_id } = req.query;
-
-    if (!user_id || typeof user_id !== 'string') {
-      return res.status(400).json({ error: 'User ID is required' });
-    }
+    const user_id = req.user.id; // Use authenticated user ID
 
     const { data, error } = await supabase
       .from('saved_questions')
@@ -38,24 +36,27 @@ async function getSavedQuestions(req: NextApiRequest, res: NextApiResponse) {
       .order('saved_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching saved questions:', error);
-      return res.status(500).json({ error: 'Failed to fetch saved questions' });
+      console.error('[API Error] Error fetching saved questions:', error);
+      return res.status(500).json(createApiError('DATABASE_ERROR', 'Failed to fetch saved questions'));
     }
 
-    res.status(200).json({ savedQuestions: data });
+    return res.status(200).json(createApiResponse({ savedQuestions: data }));
   } catch (error) {
-    console.error('Unexpected error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[API Error] Unexpected error:', error);
+    return res.status(500).json(createApiError('INTERNAL_ERROR', 'Internal server error'));
   }
 }
 
-async function saveQuestion(req: NextApiRequest, res: NextApiResponse) {
+async function saveQuestion(req: AuthenticatedRequest, res: NextApiResponse) {
   try {
-    const { user_id, question_id, response, privacy = 'private' } = req.body;
-
-    if (!user_id || !question_id) {
-      return res.status(400).json({ error: 'User ID and Question ID are required' });
+    // Validate input
+    const validation = withValidation(savedQuestionSchema)(req.body);
+    if (!validation.success) {
+      return res.status(400).json(createApiError('VALIDATION_ERROR', validation.error));
     }
+
+    const { question_id, response, privacy } = validation.data;
+    const user_id = req.user.id; // Use authenticated user ID
 
     const { data, error } = await supabase
       .from('saved_questions')
@@ -71,35 +72,55 @@ async function saveQuestion(req: NextApiRequest, res: NextApiResponse) {
       .single();
 
     if (error) {
-      console.error('Error saving question:', error);
-      return res.status(500).json({ error: 'Failed to save question' });
+      console.error('[API Error] Error saving question:', error);
+      return res.status(500).json(createApiError('DATABASE_ERROR', 'Failed to save question'));
     }
 
-    res.status(201).json({ savedQuestion: data });
+    return res.status(201).json(createApiResponse({ savedQuestion: data }));
   } catch (error) {
-    console.error('Unexpected error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[API Error] Unexpected error:', error);
+    return res.status(500).json(createApiError('INTERNAL_ERROR', 'Internal server error'));
   }
 }
 
-async function deleteSavedQuestion(req: NextApiRequest, res: NextApiResponse) {
+async function deleteSavedQuestion(req: AuthenticatedRequest, res: NextApiResponse) {
   try {
-    const { id, user_id } = req.body;
+    const { id } = req.body;
 
-    if (!id || !user_id) {
-      return res.status(400).json({ error: 'Saved question ID and User ID are required' });
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json(createApiError('VALIDATION_ERROR', 'Saved question ID is required'));
     }
 
-    const { error } = await supabase.from('saved_questions').delete().eq('id', id).eq('user_id', user_id);
+    const user_id = req.user.id; // Use authenticated user ID
+
+    // Verify ownership before deletion
+    const { data: existingRecord } = await supabase
+      .from('saved_questions')
+      .select('id')
+      .eq('id', id)
+      .eq('user_id', user_id)
+      .single();
+
+    if (!existingRecord) {
+      return res.status(404).json(createApiError('NOT_FOUND', 'Saved question not found or access denied'));
+    }
+
+    const { error } = await supabase
+      .from('saved_questions')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user_id);
 
     if (error) {
-      console.error('Error deleting saved question:', error);
-      return res.status(500).json({ error: 'Failed to delete saved question' });
+      console.error('[API Error] Error deleting saved question:', error);
+      return res.status(500).json(createApiError('DATABASE_ERROR', 'Failed to delete saved question'));
     }
 
-    res.status(200).json({ message: 'Saved question deleted successfully' });
+    return res.status(200).json(createApiResponse({ message: 'Saved question deleted successfully' }));
   } catch (error) {
-    console.error('Unexpected error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[API Error] Unexpected error:', error);
+    return res.status(500).json(createApiError('INTERNAL_ERROR', 'Internal server error'));
   }
 }
+
+export default withAuth(handler);

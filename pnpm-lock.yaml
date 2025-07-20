@@ -23,6 +23,9 @@ importers:
       next:
         specifier: ^14.1.0
         version: 14.2.30(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      next-rate-limit:
+        specifier: ^0.0.3
+        version: 0.0.3(next@14.2.30(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -32,6 +35,9 @@ importers:
       uuid:
         specifier: ^9.0.1
         version: 9.0.1
+      zod:
+        specifier: ^4.0.5
+        version: 4.0.5
     devDependencies:
       '@types/node':
         specifier: ^20.11.0
@@ -1315,6 +1321,11 @@ packages:
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
 
+  next-rate-limit@0.0.3:
+    resolution: {integrity: sha512-2VYgvxs1Mh1u4JGaxGu+dyNHUlpGOniCagZoQcqcTlsQS4OVQ4Dh3SU0mFlG2P1X2VlDN1lrjPpnaybFaGesbQ==}
+    peerDependencies:
+      next: '>=13.0.0'
+
   next@14.2.30:
     resolution: {integrity: sha512-+COdu6HQrHHFQ1S/8BBsCag61jZacmvbuL2avHvQFbWa2Ox7bE+d8FyNgxRLjXQ5wtPyQwEmk85js/AuaG2Sbg==}
     engines: {node: '>=18.17.0'}
@@ -1850,6 +1861,9 @@ packages:
   yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
+
+  zod@4.0.5:
+    resolution: {integrity: sha512-/5UuuRPStvHXu7RS+gmvRf4NXrNxpSllGwDnCBcJZtQsKrviYXm54yDGV2KYNLT5kq0lHGcl7lqWJLgSaG+tgA==}
 
 snapshots:
 
@@ -3263,6 +3277,11 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
+  next-rate-limit@0.0.3(next@14.2.30(react-dom@18.3.1(react@18.3.1))(react@18.3.1)):
+    dependencies:
+      lru-cache: 10.4.3
+      next: 14.2.30(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+
   next@14.2.30(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@next/env': 14.2.30
@@ -3916,3 +3935,5 @@ snapshots:
   yaml@2.8.0: {}
 
   yocto-queue@0.1.0: {}
+
+  zod@4.0.5: {}

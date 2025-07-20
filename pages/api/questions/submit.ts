@@ -1,17 +1,23 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase';
+import { withAuth, AuthenticatedRequest } from '@/lib/auth-middleware';
+import { questionSubmissionSchema, createApiResponse, createApiError, withValidation } from '@/lib/validation';
+import { withSubmissionRateLimit } from '@/lib/simple-rate-limit';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function submitQuestionHandler(req: AuthenticatedRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json(createApiError('METHOD_NOT_ALLOWED', 'Method not allowed'));
   }
 
   try {
-    const { text, level, theme, creator_id } = req.body;
-
-    if (!text || !level || !theme || !creator_id) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    // Validate input
+    const validation = withValidation(questionSubmissionSchema)(req.body);
+    if (!validation.success) {
+      return res.status(400).json(createApiError('VALIDATION_ERROR', validation.error));
     }
+
+    const { text, level, theme } = validation.data;
+    const creator_id = req.user.id; // Use authenticated user ID
 
     const { data, error } = await supabase
       .from('questions')
@@ -29,13 +35,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .single();
 
     if (error) {
-      console.error('Error submitting question:', error);
-      return res.status(500).json({ error: 'Failed to submit question' });
+      console.error('[API Error] Error submitting question:', error);
+      return res.status(500).json(createApiError('DATABASE_ERROR', 'Failed to submit question'));
     }
 
-    res.status(201).json({ question: data });
+    return res.status(201).json(createApiResponse({ question: data }));
   } catch (error) {
-    console.error('Unexpected error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[API Error] Unexpected error:', error);
+    return res.status(500).json(createApiError('INTERNAL_ERROR', 'Internal server error'));
   }
 }
+
+// Compose middlewares: first rate limit, then auth
+const rateLimitedHandler = withSubmissionRateLimit(async (req, res) => {
+  // Cast to AuthenticatedRequest after auth middleware runs
+  return submitQuestionHandler(req as AuthenticatedRequest, res);
+});
+
+export default withAuth(rateLimitedHandler);

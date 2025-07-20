@@ -1,27 +1,33 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase';
+import { withAuth, AuthenticatedRequest } from '@/lib/auth-middleware';
+import { roomCreationSchema, createApiResponse, createApiError, withValidation } from '@/lib/validation';
 import { v4 as uuidv4 } from 'uuid';
+import { randomBytes } from 'crypto';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     return createRoom(req, res);
   } else if (req.method === 'GET') {
     return getRoomByCode(req, res);
   } else {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json(createApiError('METHOD_NOT_ALLOWED', 'Method not allowed'));
   }
 }
 
-async function createRoom(req: NextApiRequest, res: NextApiResponse) {
+async function createRoom(req: AuthenticatedRequest, res: NextApiResponse) {
   try {
-    const { creator_id, max_players = 6, settings } = req.body;
-
-    if (!creator_id) {
-      return res.status(400).json({ error: 'Creator ID is required' });
+    // Validate input
+    const validation = withValidation(roomCreationSchema)(req.body);
+    if (!validation.success) {
+      return res.status(400).json(createApiError('VALIDATION_ERROR', validation.error));
     }
 
-    // Generate a unique 6-character room code
-    const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const { max_players, settings } = validation.data;
+    const creator_id = req.user.id; // Use authenticated user ID
+
+    // Generate cryptographically secure room code
+    const roomCode = randomBytes(3).toString('hex').toUpperCase();
 
     const { data, error } = await supabase
       .from('game_rooms')
@@ -34,7 +40,7 @@ async function createRoom(req: NextApiRequest, res: NextApiResponse) {
           current_players: 0,
           status: 'waiting',
           settings: settings || {
-            rounds: 3,
+            rounds: 5,
             level_progression: ['green', 'yellow', 'red'],
             themes: ['general'],
           },
@@ -44,14 +50,14 @@ async function createRoom(req: NextApiRequest, res: NextApiResponse) {
       .single();
 
     if (error) {
-      console.error('Error creating room:', error);
-      return res.status(500).json({ error: 'Failed to create room' });
+      console.error('[API Error] Error creating room:', error);
+      return res.status(500).json(createApiError('DATABASE_ERROR', 'Failed to create room'));
     }
 
-    res.status(201).json({ room: data });
+    return res.status(201).json(createApiResponse({ room: data }));
   } catch (error) {
-    console.error('Unexpected error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[API Error] Unexpected error:', error);
+    return res.status(500).json(createApiError('INTERNAL_ERROR', 'Internal server error'));
   }
 }
 
@@ -60,19 +66,30 @@ async function getRoomByCode(req: NextApiRequest, res: NextApiResponse) {
     const { code } = req.query;
 
     if (!code || typeof code !== 'string') {
-      return res.status(400).json({ error: 'Room code is required' });
+      return res.status(400).json(createApiError('VALIDATION_ERROR', 'Room code is required'));
     }
 
-    const { data, error } = await supabase.from('game_rooms').select('*').eq('room_code', code.toUpperCase()).single();
+    // Validate room code format (6 hex characters)
+    if (!/^[A-F0-9]{6}$/.test(code.toUpperCase())) {
+      return res.status(400).json(createApiError('VALIDATION_ERROR', 'Invalid room code format'));
+    }
+
+    const { data, error } = await supabase
+      .from('game_rooms')
+      .select('*')
+      .eq('room_code', code.toUpperCase())
+      .single();
 
     if (error) {
-      console.error('Error fetching room:', error);
-      return res.status(404).json({ error: 'Room not found' });
+      console.error('[API Error] Error fetching room:', error);
+      return res.status(404).json(createApiError('NOT_FOUND', 'Room not found'));
     }
 
-    res.status(200).json({ room: data });
+    return res.status(200).json(createApiResponse({ room: data }));
   } catch (error) {
-    console.error('Unexpected error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[API Error] Unexpected error:', error);
+    return res.status(500).json(createApiError('INTERNAL_ERROR', 'Internal server error'));
   }
 }
+
+export default withAuth(handler);

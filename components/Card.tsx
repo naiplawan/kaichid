@@ -2,18 +2,12 @@
 
 import { useState, useRef } from 'react';
 import { motion, useAnimation, type PanInfo } from 'framer-motion';
-import { Flag } from 'lucide-react'; // Import Lucide icon
+import { Flag } from 'lucide-react';
 import { Question } from '@/lib/supabase';
-
-interface CardProps {
-  question: Question;
-  onSwipe: (direction: 'left' | 'right', question: Question) => void;
-  onReport: (questionId: string) => void;
-  disabled?: boolean;
-}
+import { CardProps, SwipeDirection } from '@/lib/types';
 
 export default function Card({ question, onSwipe, onReport, disabled = false }: CardProps) {
-  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const [swipeDirection, setSwipeDirection] = useState<SwipeDirection | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const controls = useAnimation();

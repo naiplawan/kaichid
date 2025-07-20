@@ -1,36 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { Question, supabase } from '@/lib/supabase';
 import { useAuth } from './AuthContext';
-
-interface GameState {
-  mode: 'solo' | 'multiplayer' | null;
-  level: 'green' | 'yellow' | 'red';
-  currentQuestion: Question | null;
-  savedQuestions: Question[];
-  gameSession: {
-    playedQuestions: string[];
-    currentRound: number;
-    totalRounds: number;
-  };
-  room?: {
-    id: string;
-    code: string;
-    players: any[];
-    currentPlayer: string;
-    isHost: boolean;
-  };
-}
-
-interface GameContextType {
-  gameState: GameState;
-  setGameMode: (mode: 'solo' | 'multiplayer') => void;
-  setLevel: (level: 'green' | 'yellow' | 'red') => void;
-  setCurrentQuestion: (question: Question | null) => void;
-  saveQuestion: (question: Question, response?: string, privacy?: 'private' | 'shared') => void;
-  markQuestionPlayed: (questionId: string) => void;
-  resetGame: () => void;
-  setRoom: (room: any) => void;
-}
+import { GameState, GameContextType, RoomState } from '@/lib/types';
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
@@ -72,7 +43,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { user } = useAuth();
 
   const saveQuestion = useCallback(
-    async (question: Question, response?: string, privacy: 'private' | 'shared' = 'private') => {
+    async (question: Question, response?: string, privacy: 'private' | 'shared' = 'private'): Promise<void> => {
       if (!user) return;
 
       const { data, error } = await supabase.from('saved_questions').insert([
@@ -86,6 +57,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Error saving question:', error);
+        throw new Error('Failed to save question');
       } else {
         setGameState((prev) => ({
           ...prev,
@@ -110,7 +82,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setGameState(initialGameState);
   }, []);
 
-  const setRoom = useCallback((room: any) => {
+  const setRoom = useCallback((room: RoomState) => {
     setGameState((prev) => ({ ...prev, room }));
   }, []);
 
