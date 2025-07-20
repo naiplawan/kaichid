@@ -3,8 +3,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useGame } from '@/contexts/GameContext';
 import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
-import Card from '@/components/Card';
+import { GameCard } from '@/components/ui/game-card';
 import { Question } from '@/lib/supabase';
+import { Button } from '@/components/ui/button';
+import { Heart, SkipForward, Shuffle, Home, BookOpen } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
 
@@ -114,7 +116,7 @@ export default function Solo() {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-mystical-gold"></div>
+        <div className="spinner-teal h-32 w-32"></div>
       </div>
     );
   }
@@ -127,8 +129,8 @@ export default function Solo() {
           animate={{ opacity: 1, scale: 1 }}
           className="max-w-4xl mx-auto text-center"
         >
-          <h1 className="text-4xl font-mystical mb-6 text-mystical-gold">Choose Your Depth</h1>
-          <p className="text-gray-300 mb-12 text-lg">
+          <h1 className="text-5xl font-kahoot font-bold mb-6 text-teal-400">Choose Your Depth</h1>
+          <p className="text-teal-200/80 mb-12 text-lg font-medium">
             Select the conversation level that resonates with your current mood
           </p>
 
@@ -136,38 +138,38 @@ export default function Solo() {
             <motion.div
               whileHover={{ scale: 1.05 }}
               onClick={() => handleLevelSelect('green')}
-              className="mystical-card level-green p-8 cursor-pointer"
+              className="kahoot-card level-green p-8 cursor-pointer transition-all duration-300 hover:scale-105"
             >
               <div className="text-6xl mb-4">🌱</div>
-              <h3 className="text-2xl font-mystical mb-4 text-green-oracle">Icebreaker</h3>
-              <p className="text-gray-300">Light, playful questions to ease into self-reflection</p>
+              <h3 className="text-2xl font-kahoot font-bold mb-4 text-kahoot-green">Icebreaker</h3>
+              <p className="text-teal-200/70">Light, playful questions to ease into self-reflection</p>
             </motion.div>
 
             <motion.div
               whileHover={{ scale: 1.05 }}
               onClick={() => handleLevelSelect('yellow')}
-              className="mystical-card level-yellow p-8 cursor-pointer"
+              className="kahoot-card level-yellow p-8 cursor-pointer transition-all duration-300 hover:scale-105"
             >
               <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-2xl font-mystical mb-4 text-yellow-oracle">Exploration</h3>
-              <p className="text-gray-300">Deeper questions about values, dreams, and perspectives</p>
+              <h3 className="text-2xl font-kahoot font-bold mb-4 text-kahoot-yellow">Exploration</h3>
+              <p className="text-teal-200/70">Deeper questions about values, dreams, and perspectives</p>
             </motion.div>
 
             <motion.div
               whileHover={{ scale: 1.05 }}
               onClick={() => handleLevelSelect('red')}
-              className="mystical-card level-red p-8 cursor-pointer"
+              className="kahoot-card level-red p-8 cursor-pointer transition-all duration-300 hover:scale-105"
             >
               <div className="text-6xl mb-4">❤️</div>
-              <h3 className="text-2xl font-mystical mb-4 text-red-oracle">Vulnerability</h3>
-              <p className="text-gray-300">Intimate questions that touch the heart and soul</p>
+              <h3 className="text-2xl font-kahoot font-bold mb-4 text-kahoot-red">Vulnerability</h3>
+              <p className="text-teal-200/70">Intimate questions that touch the heart and soul</p>
             </motion.div>
           </div>
 
           <div className="mt-8">
             <button
               onClick={() => router.push('/dashboard')}
-              className="text-gray-400 hover:text-mystical-gold transition-colors"
+              className="text-teal-400/60 hover:text-teal-300 transition-colors font-medium"
             >
               ← Back to Dashboard
             </button>
@@ -183,16 +185,16 @@ export default function Solo() {
       <header className="p-6 flex justify-between items-center border-b border-gray-800">
         <button
           onClick={() => setShowLevelSelect(true)}
-          className="text-gray-400 hover:text-mystical-gold transition-colors"
+          className="text-teal-400/60 hover:text-teal-300 transition-colors font-medium"
         >
           ← Change Level
         </button>
-        <h1 className="text-xl font-mystical text-mystical-gold">
+        <h1 className="text-xl font-kahoot font-bold text-teal-400">
           Solo Journey • {selectedLevel.charAt(0).toUpperCase() + selectedLevel.slice(1)}
         </h1>
         <button
           onClick={() => router.push('/journal')}
-          className="text-gray-400 hover:text-mystical-gold transition-colors"
+          className="text-teal-400/60 hover:text-teal-300 transition-colors font-medium"
         >
           My Journal
         </button>
@@ -207,20 +209,20 @@ export default function Solo() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="mystical-card p-8 w-full max-w-2xl"
+              className="kahoot-card p-8 w-full max-w-2xl"
             >
-              <h3 className="text-xl font-mystical mb-4 text-mystical-gold">Capture Your Insight</h3>
-              <p className="text-gray-300 mb-6">{gameState.currentQuestion?.text}</p>
+              <h3 className="text-xl font-kahoot font-bold mb-4 text-teal-400">Capture Your Insight</h3>
+              <p className="text-teal-200/80 mb-6">{gameState.currentQuestion?.text}</p>
 
               <textarea
                 value={response}
                 onChange={(e) => setResponse(e.target.value)}
                 placeholder="Write your thoughts, feelings, or insights..."
-                className="w-full h-40 p-4 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-mystical-gold text-white resize-none"
+                className="w-full h-40 p-4 bg-kahoot-dark-surface border border-teal-500/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400 text-teal-100 resize-none backdrop-blur-sm"
               />
 
               <div className="flex items-center gap-4 mb-4">
-                <label className="flex items-center gap-2 text-gray-300">
+                <label className="flex items-center gap-2 text-teal-200">
                   <input
                     type="radio"
                     name="privacy"
@@ -230,7 +232,7 @@ export default function Solo() {
                   />
                   Private
                 </label>
-                <label className="flex items-center gap-2 text-gray-300">
+                <label className="flex items-center gap-2 text-teal-200">
                   <input
                     type="radio"
                     name="privacy"
@@ -243,15 +245,18 @@ export default function Solo() {
               </div>
 
               <div className="flex space-x-4 mt-6">
-                <button onClick={handleSaveResponse} className="oracle-button flex-1">
+                <Button onClick={handleSaveResponse} className="flex-1">
+                  <Heart className="w-4 h-4 mr-2" />
                   Save to Journal
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="secondary"
                   onClick={handleSkipResponse}
-                  className="border border-gray-600 text-gray-300 px-6 py-3 rounded-full hover:border-mystical-gold hover:text-mystical-gold transition-all"
+                  className="flex-1"
                 >
+                  <SkipForward className="w-4 h-4 mr-2" />
                   Skip
-                </button>
+                </Button>
               </div>
             </motion.div>
           ) : showEndOfDeck ? (
@@ -259,35 +264,42 @@ export default function Solo() {
               key="endofdeck"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="mystical-card p-8 text-center w-full max-w-md"
+              className="kahoot-card p-8 text-center w-full max-w-md"
             >
               <div className="text-6xl mb-6">🌟</div>
-              <h3 className="text-2xl font-mystical mb-4 text-mystical-gold">Journey Complete</h3>
-              <p className="text-gray-300 mb-8">
+              <h3 className="text-2xl font-kahoot font-bold mb-4 text-teal-400">Journey Complete</h3>
+              <p className="text-teal-200/80 mb-8">
                 You've explored all questions in this level. What would you like to do next?
               </p>
 
               <div className="space-y-4">
-                <button onClick={reshuffleDeck} className="w-full oracle-button">
+                <Button onClick={reshuffleDeck} className="w-full" size="lg">
+                  <Shuffle className="w-5 h-5 mr-2" />
                   Draw New Fate (Same Level)
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="secondary"
                   onClick={() => router.push('/journal')}
-                  className="w-full border border-mystical-gold text-mystical-gold px-6 py-3 rounded-full hover:bg-mystical-gold hover:text-mystical-dark transition-all"
+                  className="w-full"
+                  size="lg"
                 >
+                  <BookOpen className="w-5 h-5 mr-2" />
                   Review Insights
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="secondary"
                   onClick={changeLevels}
-                  className="w-full border border-gray-600 text-gray-300 px-6 py-3 rounded-full hover:border-mystical-gold hover:text-mystical-gold transition-all"
+                  className="w-full"
+                  size="lg"
                 >
+                  <Home className="w-5 h-5 mr-2" />
                   Consult New Deck
-                </button>
+                </Button>
               </div>
             </motion.div>
           ) : (
             availableQuestions[currentQuestionIndex] && (
-              <Card
+              <GameCard
                 key={availableQuestions[currentQuestionIndex].id}
                 question={availableQuestions[currentQuestionIndex]}
                 onSwipe={handleCardSwipe}
@@ -301,13 +313,13 @@ export default function Solo() {
       {/* Progress */}
       <div className="p-6 text-center">
         <div className="max-w-md mx-auto">
-          <div className="flex justify-between text-sm text-gray-400 mb-2">
+          <div className="flex justify-between text-sm text-teal-400/70 mb-2 font-medium">
             <span>Question {currentQuestionIndex + 1}</span>
             <span>{availableQuestions.length} Total</span>
           </div>
-          <div className="w-full bg-gray-800 rounded-full h-2">
+          <div className="w-full bg-kahoot-dark-surface rounded-full h-3 border border-teal-500/20">
             <div
-              className="bg-gradient-to-r from-mystical-gold to-mystical-purple h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-teal-400 to-teal-600 h-3 rounded-full transition-all duration-500 shadow-lg shadow-teal-500/30"
               style={{ width: `${((currentQuestionIndex + 1) / availableQuestions.length) * 100}%` }}
             ></div>
           </div>

@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { DoorOpen, ArrowLeft, Sparkles, Users, Zap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function JoinRoom() {
   const [roomCode, setRoomCode] = useState('');
@@ -17,44 +20,188 @@ export default function JoinRoom() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
+    <div className="min-h-screen cyber-grid flex items-center justify-center px-6 py-8">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-20 left-20 w-32 h-32 bg-teal-500/10 rounded-full blur-xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.6, 0.3],
+          }}
+          transition={{ duration: 4, repeat: Infinity }}
+        />
+        <motion.div
+          className="absolute bottom-20 right-20 w-24 h-24 bg-web3-neon/10 rounded-full blur-xl"
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.6, 0.3, 0.6],
+          }}
+          transition={{ duration: 3, repeat: Infinity }}
+        />
+        <motion.div
+          className="absolute top-1/2 right-10 w-40 h-40 bg-web3-cyber/10 rounded-full blur-xl"
+          animate={{
+            x: [-10, 10, -10],
+            opacity: [0.2, 0.5, 0.2],
+          }}
+          transition={{ duration: 5, repeat: Infinity }}
+        />
+      </div>
+
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mystical-card p-8 w-full max-w-md"
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6 }}
+        className="relative z-10 w-full max-w-md"
       >
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-mystical text-mystical-gold mb-2">Join a KAICHID Circle</h1>
-          <p className="text-gray-400">Enter the 6-digit code to join your friends.</p>
-        </div>
+        <Card className="neon-border">
+          <CardHeader className="text-center space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="flex justify-center"
+            >
+              <motion.div
+                className="relative"
+                animate={{ 
+                  rotate: [0, 360],
+                  scale: [1, 1.1, 1]
+                }}
+                transition={{ 
+                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
+                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                }}
+              >
+                <DoorOpen className="w-12 h-12 text-teal-400" />
+                <motion.div
+                  className="absolute inset-0"
+                  animate={{ rotate: [360, 0] }}
+                  transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                >
+                  <Users className="w-12 h-12 text-web3-neon" />
+                </motion.div>
+              </motion.div>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <CardTitle className="text-3xl font-kahoot font-bold text-teal-400 mb-2">
+                Join a KAICHID Circle
+              </CardTitle>
+              <p className="text-teal-200/70">Enter the 6-digit code to connect with friends</p>
+            </motion.div>
+          </CardHeader>
 
-        {error && (
-          <div className="bg-red-500/20 border border-red-500 text-red-200 px-4 py-3 rounded mb-6">{error}</div>
-        )}
+          <CardContent className="space-y-8">
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-kahoot-red/20 border border-kahoot-red text-red-200 px-4 py-3 rounded-xl flex items-center space-x-2"
+              >
+                <Zap className="w-4 h-4 flex-shrink-0" />
+                <span>{error}</span>
+              </motion.div>
+            )}
 
-        <div className="space-y-6">
-          <input
-            type="text"
-            value={roomCode}
-            onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-            maxLength={6}
-            className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-mystical-gold text-white text-2xl text-center tracking-widest font-mono"
-            placeholder="XYZ123"
-          />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="space-y-6"
+            >
+              <div className="relative">
+                <motion.input
+                  type="text"
+                  value={roomCode}
+                  onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                  maxLength={6}
+                  className="w-full px-6 py-4 bg-kahoot-dark-surface border-2 border-teal-500/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-400 text-white text-3xl text-center tracking-widest font-kahoot font-bold transition-all"
+                  placeholder="ABC123"
+                  whileFocus={{ scale: 1.02 }}
+                />
+                <motion.div
+                  className="absolute inset-0 rounded-xl border-2 border-teal-400/50"
+                  initial={{ opacity: 0, scale: 1 }}
+                  animate={{ 
+                    opacity: roomCode.length === 6 ? [0.5, 1, 0.5] : 0,
+                    scale: roomCode.length === 6 ? [1, 1.02, 1] : 1
+                  }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                />
+              </div>
 
-          <button
-            onClick={handleJoinRoom}
-            className="w-full oracle-button py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Enter Circle
-          </button>
-        </div>
+              <div className="text-center text-sm text-teal-200/60">
+                <p>Room codes are shared by the host</p>
+                <p className="text-xs mt-1 text-teal-300/50">6 characters • Letters & Numbers</p>
+              </div>
 
-        <div className="mt-6 text-center">
-          <Link href="/dashboard" className="text-gray-500 hover:text-mystical-gold transition-colors">
-            ← Back to Dashboard
-          </Link>
-        </div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+              >
+                <Button
+                  onClick={handleJoinRoom}
+                  disabled={roomCode.length !== 6}
+                  size="lg"
+                  className="w-full relative overflow-hidden"
+                >
+                  <span className="relative flex items-center justify-center space-x-2">
+                    <DoorOpen className="w-5 h-5" />
+                    <span>Enter Circle</span>
+                  </span>
+                </Button>
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7 }}
+              className="space-y-4"
+            >
+              <div className="text-center border-t border-teal-500/20 pt-6">
+                <p className="text-teal-200/70 text-sm mb-4">
+                  Don't have a room code?
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => router.push('/create-room')}
+                    className="text-xs"
+                  >
+                    Create Room
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => router.push('/demo')}
+                    className="text-xs"
+                  >
+                    Try Demo
+                  </Button>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <Link 
+                  href="/dashboard" 
+                  className="inline-flex items-center space-x-2 text-teal-400/60 hover:text-teal-300 transition-colors group"
+                >
+                  <ArrowLeft className="w-4 h-4 group-hover:animate-cyber-glitch" />
+                  <span>Back to Dashboard</span>
+                </Link>
+              </div>
+            </motion.div>
+          </CardContent>
+        </Card>
       </motion.div>
     </div>
   );

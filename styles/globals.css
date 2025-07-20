@@ -1,101 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Poppins:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: 220 10% 3%;
+    --foreground: 180 100% 90%;
+    --card: 220 13% 8%;
+    --card-foreground: 180 100% 90%;
+    --popover: 220 13% 8%;
+    --popover-foreground: 180 100% 90%;
+    --primary: 174 83% 39%; /* Transformative Teal */
+    --primary-foreground: 220 10% 3%;
+    --secondary: 220 13% 15%;
+    --secondary-foreground: 180 100% 90%;
+    --muted: 220 13% 15%;
+    --muted-foreground: 180 20% 60%;
+    --accent: 174 60% 51%;
+    --accent-foreground: 220 10% 3%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 180 100% 90%;
+    --border: 220 13% 18%;
+    --input: 220 13% 18%;
+    --ring: 174 83% 39%;
+    --radius: 0.75rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
   body {
-    @apply bg-gradient-to-br from-mystical-dark via-gray-900 to-mystical-purple;
-    @apply text-white font-sans;
+    @apply bg-gradient-to-br from-kahoot-dark via-gray-950 to-teal-950;
+    @apply text-foreground font-sans antialiased;
     @apply min-h-screen;
+    background-attachment: fixed;
   }
 
   html {
     scroll-behavior: smooth;
   }
-
-  * {
-    font-family: 'Roboto Condensed', sans-serif;
-  }
 }
 
 @layer components {
-  .mystical-card {
-    @apply bg-gradient-to-br from-gray-800 to-gray-900;
-    @apply border border-mystical-gold;
-    @apply rounded-lg shadow-2xl;
-    @apply relative overflow-hidden;
+  /* Kahoot-inspired Web3 Design System */
+  .kahoot-card {
+    @apply bg-gradient-to-br from-kahoot-dark-card/80 to-kahoot-dark-surface/60;
+    @apply border border-teal-500/30 rounded-2xl backdrop-blur-lg;
+    @apply shadow-2xl relative overflow-hidden;
+    @apply transition-all duration-300 hover:shadow-teal-500/20;
   }
 
-  .mystical-card::before {
+  .kahoot-card::before {
     content: '';
-    @apply absolute inset-0;
-    @apply bg-gradient-to-br from-mystical-gold/20 to-transparent;
-    @apply pointer-events-none;
+    @apply absolute inset-0 bg-gradient-to-br from-teal-500/10 to-transparent;
+    @apply pointer-events-none rounded-2xl;
   }
 
-  .oracle-button {
-    @apply bg-gradient-to-r from-mystical-purple to-mystical-gold;
-    @apply text-white font-semibold;
-    @apply px-6 py-3 rounded-full;
-    @apply transform transition-all duration-300;
-    @apply hover:scale-105 hover:shadow-lg;
-    @apply focus:outline-none focus:ring-2 focus:ring-mystical-gold;
+  .kahoot-card::after {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-teal-400/5 to-transparent;
+    @apply pointer-events-none animate-pulse;
   }
 
-  .btn-primary {
-    @apply bg-gradient-to-r from-mystical-gold to-yellow-500;
-    @apply text-mystical-dark font-semibold;
-    @apply px-6 py-3 rounded-lg;
-    @apply transform transition-all duration-300;
-    @apply hover:scale-105 hover:shadow-lg hover:from-yellow-400 hover:to-mystical-gold;
-    @apply focus:outline-none focus:ring-2 focus:ring-mystical-gold;
-    @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none;
+  /* Primary Buttons - Kahoot Style */
+  .btn-kahoot-primary {
+    @apply bg-gradient-to-r from-teal-500 to-teal-600;
+    @apply text-white font-bold font-kahoot;
+    @apply px-8 py-4 rounded-xl text-lg;
+    @apply transform transition-all duration-200;
+    @apply hover:scale-105 hover:shadow-xl hover:shadow-teal-500/30;
+    @apply active:scale-95 focus:outline-none focus:ring-4 focus:ring-teal-400/50;
+    @apply border-2 border-teal-400/50;
   }
 
-  .btn-secondary {
-    @apply bg-gradient-to-r from-gray-700 to-gray-600;
-    @apply text-white font-semibold;
-    @apply px-6 py-3 rounded-lg border border-gray-500;
-    @apply transform transition-all duration-300;
-    @apply hover:scale-105 hover:shadow-lg hover:from-gray-600 hover:to-gray-500;
-    @apply focus:outline-none focus:ring-2 focus:ring-gray-400;
+  .btn-kahoot-secondary {
+    @apply bg-gradient-to-r from-kahoot-dark-surface to-gray-800;
+    @apply text-teal-300 font-semibold font-kahoot;
+    @apply px-6 py-3 rounded-xl border-2 border-teal-500/30;
+    @apply transform transition-all duration-200;
+    @apply hover:scale-105 hover:border-teal-400 hover:text-teal-200;
+    @apply active:scale-95 focus:outline-none focus:ring-4 focus:ring-teal-400/30;
   }
 
-  .btn-mystical {
-    @apply bg-gradient-to-r from-mystical-purple to-purple-600;
-    @apply text-white font-semibold;
-    @apply px-6 py-3 rounded-lg;
-    @apply transform transition-all duration-300;
-    @apply hover:scale-105 hover:shadow-lg hover:from-purple-500 hover:to-mystical-purple;
-    @apply focus:outline-none focus:ring-2 focus:ring-mystical-purple;
+  .btn-kahoot-danger {
+    @apply bg-gradient-to-r from-kahoot-red to-red-600;
+    @apply text-white font-bold font-kahoot;
+    @apply px-6 py-3 rounded-xl;
+    @apply transform transition-all duration-200;
+    @apply hover:scale-105 hover:shadow-xl hover:shadow-red-500/30;
+    @apply active:scale-95;
   }
 
+  .btn-kahoot-success {
+    @apply bg-gradient-to-r from-kahoot-green to-green-600;
+    @apply text-white font-bold font-kahoot;
+    @apply px-6 py-3 rounded-xl;
+    @apply transform transition-all duration-200;
+    @apply hover:scale-105 hover:shadow-xl hover:shadow-green-500/30;
+    @apply active:scale-95;
+  }
+
+  /* Web3 Neon Effects */
+  .neon-border {
+    @apply border border-teal-400 rounded-xl;
+    box-shadow: 
+      0 0 5px #14b8a6,
+      0 0 10px #14b8a6,
+      0 0 15px #14b8a6,
+      inset 0 0 5px rgba(20, 184, 166, 0.1);
+  }
+
+  .neon-glow {
+    @apply animate-neon-pulse;
+  }
+
+  .cyber-grid {
+    background-image: 
+      linear-gradient(rgba(20, 184, 166, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20, 184, 166, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* Game Card Levels */
   .level-green {
-    @apply border-green-oracle bg-gradient-to-br from-green-oracle/20 to-green-dark/10;
+    @apply border-kahoot-green/50 bg-gradient-to-br from-kahoot-green/20 to-green-900/10;
+    box-shadow: 0 0 20px rgba(38, 137, 12, 0.3);
   }
 
   .level-yellow {
-    @apply border-yellow-oracle bg-gradient-to-br from-yellow-oracle/20 to-yellow-dark/10;
+    @apply border-kahoot-yellow/50 bg-gradient-to-br from-kahoot-yellow/20 to-yellow-900/10;
+    box-shadow: 0 0 20px rgba(255, 166, 2, 0.3);
   }
 
   .level-red {
-    @apply border-red-oracle bg-gradient-to-br from-red-oracle/20 to-red-dark/10;
+    @apply border-kahoot-red/50 bg-gradient-to-br from-kahoot-red/20 to-red-900/10;
+    box-shadow: 0 0 20px rgba(226, 27, 60, 0.3);
   }
 
+  .level-purple {
+    @apply border-kahoot-purple/50 bg-gradient-to-br from-kahoot-purple/20 to-purple-900/10;
+    box-shadow: 0 0 20px rgba(156, 68, 148, 0.3);
+  }
+
+  /* Interactive Elements */
   .swipe-feedback {
     @apply absolute inset-0 flex items-center justify-center;
-    @apply text-6xl font-bold;
+    @apply text-6xl font-bold font-kahoot;
     @apply pointer-events-none;
     @apply transition-all duration-200;
   }
 
   .insight-feedback {
-    @apply text-green-oracle;
+    @apply text-kahoot-green;
     transform: rotate(15deg);
+    text-shadow: 0 0 10px rgba(38, 137, 12, 0.8);
   }
 
   .skip-feedback {
-    @apply text-red-oracle;
+    @apply text-kahoot-red;
     transform: rotate(-15deg);
+    text-shadow: 0 0 10px rgba(226, 27, 60, 0.8);
+  }
+
+  /* Loading Spinner */
+  .spinner-teal {
+    @apply animate-spin rounded-full border-4 border-teal-200/20 border-t-teal-500;
+  }
+
+  /* Glass Morphism */
+  .glass-morphism {
+    background: rgba(20, 184, 166, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(20, 184, 166, 0.2);
   }
 }

@@ -5,6 +5,10 @@ import { useGame } from '@/contexts/GameContext';
 import { supabase, Question, GameRoom, RoomPlayer, GameSession } from '@/lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { Users, Play, LogOut, Crown, Zap, Clock, Target, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 
 interface MultiplayerGameState {
   phase: 'waiting' | 'playing' | 'answering' | 'reviewing' | 'finished';
@@ -288,25 +292,37 @@ export default function MultiplayerRoom() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-mystical-gold"></div>
+      <div className="min-h-screen cyber-grid flex items-center justify-center">
+        <Spinner size="xl" text="Connecting to the circle..." />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen cyber-grid flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="mystical-card p-8 text-center"
+          className="w-full max-w-md"
         >
-          <h1 className="text-2xl font-mystical text-red-400 mb-4">Error</h1>
-          <p className="text-gray-300 mb-6">{error}</p>
-          <button onClick={() => router.push('/dashboard')} className="btn-primary">
-            Return to Dashboard
-          </button>
+          <Card className="neon-border">
+            <CardContent className="p-8 text-center">
+              <motion.div
+                className="text-6xl mb-6"
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+              >
+                ⚠️
+              </motion.div>
+              <h1 className="text-2xl font-kahoot font-bold text-kahoot-red mb-4">Connection Error</h1>
+              <p className="text-teal-200/70 mb-6">{error}</p>
+              <Button onClick={() => router.push('/dashboard')} size="lg" className="w-full">
+                <Sparkles className="w-5 h-5 mr-2" />
+                Return to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
     );
@@ -315,66 +331,156 @@ export default function MultiplayerRoom() {
   if (!room) return null;
 
   return (
-    <div className="min-h-screen p-4">
-      {/* Room Header */}
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mystical-card p-6 mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-3xl font-mystical text-mystical-gold">Room: {room.room_code}</h1>
-          <div className="flex gap-3">
-            {isRoomCreator && room.status === 'waiting' && players.length >= 2 && (
-              <button onClick={startGame} className="btn-primary">
-                Start Game
-              </button>
-            )}
-            <button onClick={leaveRoom} className="btn-secondary">
-              Leave Room
-            </button>
-          </div>
-        </div>
+    <div className="min-h-screen cyber-grid p-4">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-20 right-20 w-40 h-40 bg-teal-500/10 rounded-full blur-xl"
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.2, 0.5, 0.2],
+          }}
+          transition={{ duration: 6, repeat: Infinity }}
+        />
+        <motion.div
+          className="absolute bottom-20 left-20 w-32 h-32 bg-web3-cyber/10 rounded-full blur-xl"
+          animate={{
+            scale: [1.3, 1, 1.3],
+            opacity: [0.5, 0.2, 0.5],
+          }}
+          transition={{ duration: 5, repeat: Infinity }}
+        />
+      </div>
 
-        <div className="flex justify-between items-center text-sm text-gray-400">
-          <span>
-            Status: <span className="text-mystical-gold capitalize">{room.status}</span>
-          </span>
-          <span>
-            Players: {players.length}/{room.max_players}
-          </span>
-          <span>Rounds: {room.settings?.rounds || 5}</span>
-        </div>
+      {/* Room Header */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        className="relative z-10 mb-6"
+      >
+        <Card className="neon-border">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center space-x-4">
+                <motion.div
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                >
+                  <Crown className="w-8 h-8 text-teal-400" />
+                </motion.div>
+                <div>
+                  <h1 className="text-3xl font-kahoot font-bold text-teal-400">Circle: {room.room_code}</h1>
+                  <p className="text-teal-200/60 text-sm">KAICHID Connection Space</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                {isRoomCreator && room.status === 'waiting' && players.length >= 2 && (
+                  <Button onClick={startGame} size="lg">
+                    <Play className="w-5 h-5 mr-2" />
+                    Start Game
+                  </Button>
+                )}
+                <Button onClick={leaveRoom} variant="secondary" size="lg">
+                  <LogOut className="w-5 h-5 mr-2" />
+                  Leave Circle
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="kahoot-card p-3 text-center">
+                <div className="flex items-center justify-center space-x-2">
+                  <Zap className="w-4 h-4 text-kahoot-green" />
+                  <span className="text-teal-300">Status:</span>
+                </div>
+                <span className={`font-kahoot font-bold capitalize ${
+                  room.status === 'waiting' ? 'text-kahoot-yellow' : 
+                  room.status === 'playing' ? 'text-kahoot-green' : 'text-teal-400'
+                }`}>{room.status}</span>
+              </div>
+              <div className="kahoot-card p-3 text-center">
+                <div className="flex items-center justify-center space-x-2">
+                  <Users className="w-4 h-4 text-kahoot-blue" />
+                  <span className="text-teal-300">Players:</span>
+                </div>
+                <span className="font-kahoot font-bold text-teal-400">
+                  {players.length}/{room.max_players}
+                </span>
+              </div>
+              <div className="kahoot-card p-3 text-center">
+                <div className="flex items-center justify-center space-x-2">
+                  <Target className="w-4 h-4 text-kahoot-purple" />
+                  <span className="text-teal-300">Rounds:</span>
+                </div>
+                <span className="font-kahoot font-bold text-teal-400">{room.settings?.rounds || 5}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
         {/* Players List */}
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="mystical-card p-6">
-          <h2 className="text-xl font-mystical text-mystical-gold mb-4">Players</h2>
-          <div className="space-y-3">
-            <AnimatePresence>
-              {players.map((player) => (
-                <motion.div
-                  key={player.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="flex items-center gap-3 p-3 bg-mystical-dark-lighter rounded-lg"
-                >
-                  <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                  <span className="text-gray-300">{player.username}</span>
-                  {player.user_id === room.creator_id && (
-                    <span className="text-xs bg-mystical-gold text-mystical-dark px-2 py-1 rounded">HOST</span>
-                  )}
-                  {player.user_id === user?.id && (
-                    <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded">YOU</span>
-                  )}
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+          <Card className="neon-border">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-teal-400">
+                <Users className="w-6 h-6" />
+                <span>Connected Souls</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <AnimatePresence>
+                {players.map((player, index) => (
+                  <motion.div
+                    key={player.id}
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="kahoot-card p-4 level-green"
+                  >
+                    <div className="flex items-center gap-3">
+                      <motion.div 
+                        className="w-4 h-4 rounded-full bg-kahoot-green"
+                        animate={{ 
+                          scale: [1, 1.2, 1],
+                          opacity: [0.7, 1, 0.7]
+                        }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      ></motion.div>
+                      <span className="text-teal-200 font-kahoot flex-1">{player.username}</span>
+                      <div className="flex space-x-1">
+                        {player.user_id === room.creator_id && (
+                          <span className="text-xs bg-teal-400 text-kahoot-dark px-2 py-1 rounded-full font-kahoot font-bold">
+                            HOST
+                          </span>
+                        )}
+                        {player.user_id === user?.id && (
+                          <span className="text-xs bg-web3-neon text-kahoot-dark px-2 py-1 rounded-full font-kahoot font-bold">
+                            YOU
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
 
-          {room.status === 'waiting' && players.length < 2 && (
-            <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-              <p className="text-yellow-400 text-sm">Waiting for more players to join...</p>
-            </div>
-          )}
+              {room.status === 'waiting' && players.length < 2 && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="kahoot-card p-4 border-kahoot-yellow/30"
+                >
+                  <div className="flex items-center space-x-2 text-kahoot-yellow">
+                    <Clock className="w-4 h-4" />
+                    <p className="text-sm font-kahoot">Waiting for more souls to join the circle...</p>
+                  </div>
+                </motion.div>
+              )}
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* Game Area */}
@@ -383,33 +489,80 @@ export default function MultiplayerRoom() {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="mystical-card p-8 text-center"
             >
-              <h2 className="text-2xl font-mystical text-mystical-gold mb-4">Waiting for Game to Start</h2>
-              <p className="text-gray-300 mb-6">
-                {isRoomCreator
-                  ? `You can start the game when you have at least 2 players (${players.length}/2)`
-                  : 'The host will start the game soon...'}
-              </p>
+              <Card className="neon-border">
+                <CardContent className="p-8 text-center">
+                  <motion.div
+                    className="text-6xl mb-6"
+                    animate={{ 
+                      scale: [1, 1.1, 1],
+                      rotate: [0, 5, -5, 0]
+                    }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  >
+                    🔮
+                  </motion.div>
+                  <h2 className="text-3xl font-kahoot font-bold text-teal-400 mb-4">Circle is Forming</h2>
+                  <p className="text-teal-200/70 mb-8 text-lg">
+                    {isRoomCreator
+                      ? `Ready to begin when you have at least 2 souls connected (${players.length}/2)`
+                      : 'The host will begin our journey together soon...'}
+                  </p>
 
-              <div className="grid grid-cols-2 gap-4 text-left max-w-md mx-auto">
-                <div>
-                  <h3 className="font-medium text-mystical-gold mb-2">Game Settings</h3>
-                  <ul className="text-sm text-gray-400 space-y-1">
-                    <li>• Rounds: {room.settings?.rounds || 5}</li>
-                    <li>• Themes: {room.settings?.themes?.join(', ') || 'Mixed'}</li>
-                    <li>• Levels: {room.settings?.level_progression?.join(' → ') || 'Progressive'}</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="font-medium text-mystical-gold mb-2">How to Play</h3>
-                  <ul className="text-sm text-gray-400 space-y-1">
-                    <li>• Answer questions together</li>
-                    <li>• Share your thoughts</li>
-                    <li>• Learn about each other</li>
-                  </ul>
-                </div>
-              </div>
+                  <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="kahoot-card p-6 level-blue"
+                    >
+                      <h3 className="font-kahoot font-bold text-kahoot-blue mb-4 flex items-center space-x-2">
+                        <Target className="w-5 h-5" />
+                        <span>Circle Settings</span>
+                      </h3>
+                      <ul className="text-sm text-teal-200/70 space-y-2">
+                        <li className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-teal-400 rounded-full"></div>
+                          <span>Rounds: {room.settings?.rounds || 5}</span>
+                        </li>
+                        <li className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-teal-400 rounded-full"></div>
+                          <span>Themes: {room.settings?.themes?.join(', ') || 'All Dimensions'}</span>
+                        </li>
+                        <li className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-teal-400 rounded-full"></div>
+                          <span>Journey: {room.settings?.level_progression?.join(' → ') || 'Surface to Soul'}</span>
+                        </li>
+                      </ul>
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 }}
+                      className="kahoot-card p-6 level-green"
+                    >
+                      <h3 className="font-kahoot font-bold text-kahoot-green mb-4 flex items-center space-x-2">
+                        <Sparkles className="w-5 h-5" />
+                        <span>The Journey</span>
+                      </h3>
+                      <ul className="text-sm text-teal-200/70 space-y-2">
+                        <li className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-teal-400 rounded-full"></div>
+                          <span>Share authentic responses</span>
+                        </li>
+                        <li className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-teal-400 rounded-full"></div>
+                          <span>Listen with curiosity</span>
+                        </li>
+                        <li className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-teal-400 rounded-full"></div>
+                          <span>Discover new dimensions</span>
+                        </li>
+                      </ul>
+                    </motion.div>
+                  </div>
+                </CardContent>
+              </Card>
             </motion.div>
           )}
 
@@ -417,28 +570,55 @@ export default function MultiplayerRoom() {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="mystical-card p-8"
             >
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-mystical text-mystical-gold">
-                    Round {multiplayerState.currentRound} of {multiplayerState.totalRounds}
-                  </h2>
-                </div>
+              <Card className="neon-border">
+                <CardContent className="p-8">
+                  <div className="mb-6">
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-2xl font-kahoot font-bold text-teal-400 flex items-center space-x-2">
+                        <Target className="w-6 h-6" />
+                        <span>Round {multiplayerState.currentRound} of {multiplayerState.totalRounds}</span>
+                      </h2>
+                    </div>
 
-                <div className="text-center p-6 bg-mystical-dark-lighter rounded-lg">
-                  <p className="text-gray-300 text-lg leading-relaxed">
-                    Multiplayer gameplay is currently being enhanced with Supabase Realtime.
-                    <br />
-                    <span className="text-yellow-400 font-semibold">
-                      Demo: Turn-based play, chat, and wildcards coming soon!
-                    </span>
-                  </p>
-                  <p className="text-gray-400 mt-4">
-                    The foundation is ready - questions, responses, and real-time updates are all set up.
-                  </p>
-                </div>
-              </div>
+                    <div className="kahoot-card p-8 text-center level-purple">
+                      <motion.div
+                        className="text-6xl mb-6"
+                        animate={{ 
+                          scale: [1, 1.1, 1],
+                          rotate: [0, 10, -10, 0]
+                        }}
+                        transition={{ duration: 4, repeat: Infinity }}
+                      >
+                        🚀
+                      </motion.div>
+                      <p className="text-teal-200 text-xl leading-relaxed mb-6">
+                        The multiplayer experience is being enhanced with real-time magic!
+                      </p>
+                      <div className="kahoot-card p-6 bg-web3-neon/10 border-web3-neon/30">
+                        <h3 className="text-web3-neon font-kahoot font-bold text-lg mb-4">Coming Soon to Your Circle:</h3>
+                        <div className="grid md:grid-cols-3 gap-4 text-sm">
+                          <div className="flex items-center space-x-2">
+                            <Sparkles className="w-4 h-4 text-web3-neon" />
+                            <span className="text-teal-200">Turn-based gameplay</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Users className="w-4 h-4 text-web3-neon" />
+                            <span className="text-teal-200">Live reactions</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Zap className="w-4 h-4 text-web3-neon" />
+                            <span className="text-teal-200">Wildcard moments</span>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-teal-300/60 mt-6 text-sm">
+                        The foundation is ready - questions, responses, and real-time sync are all prepared for launch.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </motion.div>
           )}
         </div>

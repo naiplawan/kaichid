@@ -2,8 +2,12 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/router';
 import { supabase, Question } from '@/lib/supabase';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { Book, ArrowLeft, Trash2, Heart, Calendar, Tag, Sparkles, Play } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 
 interface SavedInsight {
   id: string;
@@ -80,79 +84,206 @@ export default function Journal() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen cyber-grid">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-20 right-20 w-40 h-40 bg-teal-500/10 rounded-full blur-xl"
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.2, 0.5, 0.2],
+          }}
+          transition={{ duration: 6, repeat: Infinity }}
+        />
+        <motion.div
+          className="absolute bottom-20 left-20 w-32 h-32 bg-web3-cyber/10 rounded-full blur-xl"
+          animate={{
+            scale: [1.3, 1, 1.3],
+            opacity: [0.5, 0.2, 0.5],
+          }}
+          transition={{ duration: 5, repeat: Infinity }}
+        />
+      </div>
+
       {/* Header */}
-      <header className="p-6 flex justify-between items-center border-b border-gray-800">
-        <Link href="/dashboard" className="text-gray-400 hover:text-mystical-gold transition-colors">
-          ← Back to Dashboard
-        </Link>
-        <h1 className="text-2xl font-mystical text-mystical-gold">My Journal</h1>
-        <div className="w-24"></div>
+      <header className="relative z-10 p-6">
+        <Card className="neon-border">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-center">
+              <Link 
+                href="/dashboard" 
+                className="inline-flex items-center space-x-2 text-teal-400/60 hover:text-teal-300 transition-colors group"
+              >
+                <ArrowLeft className="w-4 h-4 group-hover:animate-cyber-glitch" />
+                <span>Back to Dashboard</span>
+              </Link>
+              
+              <div className="flex items-center space-x-4">
+                <motion.div
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                >
+                  <Book className="w-8 h-8 text-teal-400" />
+                </motion.div>
+                <div>
+                  <h1 className="text-3xl font-kahoot font-bold text-teal-400">Soul Journal</h1>
+                  <p className="text-teal-200/60 text-sm">Your saved insights and reflections</p>
+                </div>
+              </div>
+              
+              <div className="w-24"></div>
+            </div>
+          </CardContent>
+        </Card>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto p-6">
+      <main className="relative z-10 max-w-6xl mx-auto p-6">
         {insights.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-6">📖</div>
-            <h2 className="text-3xl font-mystical text-mystical-gold mb-4">Your Journal is Empty</h2>
-            <p className="text-gray-300 mb-8">
-              Play a solo game and swipe right on questions to save your insights here.
-            </p>
-            <Link href="/solo" className="oracle-button">
-              Start a Solo Journey
-            </Link>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-20"
+          >
+            <Card className="neon-border max-w-2xl mx-auto">
+              <CardContent className="p-12 text-center">
+                <motion.div
+                  className="text-8xl mb-8"
+                  animate={{ 
+                    scale: [1, 1.1, 1],
+                    rotate: [0, 5, -5, 0]
+                  }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                >
+                  📖
+                </motion.div>
+                <h2 className="text-4xl font-kahoot font-bold text-teal-400 mb-6">Your Soul Journal Awaits</h2>
+                <p className="text-teal-200/70 mb-8 text-lg leading-relaxed">
+                  Begin your journey of self-discovery. Play solo games and save meaningful insights that resonate with your soul.
+                </p>
+                
+                <div className="space-y-4">
+                  <Button size="lg" onClick={() => router.push('/solo')} className="w-full max-w-xs">
+                    <Play className="w-5 h-5 mr-2" />
+                    Start Solo Journey
+                  </Button>
+                  <p className="text-teal-300/50 text-sm">
+                    Swipe right ♥ on questions that speak to you
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         ) : (
           <div className="space-y-6">
-            {insights.map((insight, index) => (
-              <motion.div
-                key={insight.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className={`mystical-card p-6 ${
-                  insight.questions.length > 0 ? getLevelClass(insight.questions[0]?.level || 'green') : ''
-                }`}
-              >
-                {insight.questions.length > 0 && (
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-sm text-gray-400 mb-2">
-                        {new Date(insight.saved_at).toLocaleDateString()} • {insight.questions[0]?.theme}
-                      </p>
-                      <h3 className="text-lg font-oracle leading-relaxed text-white mb-4">
-                        {insight.questions[0]?.text}
-                      </h3>
-                    </div>
-                    <div
-                      className={`px-3 py-1 text-sm rounded-full border ${
-                        insight.questions[0]?.level === 'green'
-                          ? 'border-green-oracle text-green-oracle'
-                          : insight.questions[0]?.level === 'yellow'
-                          ? 'border-yellow-oracle text-yellow-oracle'
-                          : 'border-red-oracle text-red-oracle'
-                      }`}
-                    >
-                      {insight.questions[0]?.level}
-                    </div>
-                  </div>
-                )}
-
-                {insight.response && (
-                  <div className="mt-4 pt-4 border-t border-mystical-gold/20">
-                    <p className="text-gray-200 whitespace-pre-wrap">{insight.response}</p>
-                  </div>
-                )}
-
-                <button
-                  onClick={() => handleDelete(insight.id)}
-                  className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-2xl font-kahoot font-bold text-teal-400 mb-2">
+                {insights.length} Saved Insights
+              </h2>
+              <p className="text-teal-200/60">Your collection of meaningful moments</p>
+            </motion.div>
+            
+            <AnimatePresence>
+              {insights.map((insight, index) => (
+                <motion.div
+                  key={insight.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                  transition={{ delay: index * 0.1 }}
+                  layout
                 >
-                  Remove from Journal
-                </button>
-              </motion.div>
-            ))}
+                  <Card className={`neon-border ${
+                    insight.questions.length > 0 ? getLevelClass(insight.questions[0]?.level || 'green') : ''
+                  }`}>
+                    <CardContent className="p-6">
+                      {insight.questions.length > 0 && (
+                        <div className="flex justify-between items-start mb-6">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-4 mb-3">
+                              <div className="flex items-center space-x-2 text-sm text-teal-300/70">
+                                <Calendar className="w-4 h-4" />
+                                <span>{new Date(insight.saved_at).toLocaleDateString('en-US', { 
+                                  weekday: 'long', 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}</span>
+                              </div>
+                              <div className="flex items-center space-x-2 text-sm text-teal-300/70">
+                                <Tag className="w-4 h-4" />
+                                <span>{insight.questions[0]?.theme}</span>
+                              </div>
+                            </div>
+                            <h3 className="text-xl font-kahoot leading-relaxed text-teal-100 mb-4">
+                              {insight.questions[0]?.text}
+                            </h3>
+                          </div>
+                          <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            className={`px-4 py-2 text-sm rounded-full border font-kahoot font-bold ${
+                              insight.questions[0]?.level === 'green'
+                                ? 'border-kahoot-green text-kahoot-green bg-kahoot-green/10'
+                                : insight.questions[0]?.level === 'yellow'
+                                ? 'border-kahoot-yellow text-kahoot-yellow bg-kahoot-yellow/10'
+                                : 'border-kahoot-red text-kahoot-red bg-kahoot-red/10'
+                            }`}
+                          >
+                            {insight.questions[0]?.level}
+                          </motion.div>
+                        </div>
+                      )}
+
+                      {insight.response && (
+                        <div className="kahoot-card p-6 mb-6 bg-teal-500/5 border-teal-500/20">
+                          <div className="flex items-center space-x-2 mb-3">
+                            <Heart className="w-4 h-4 text-teal-400" />
+                            <span className="text-sm font-kahoot font-medium text-teal-300">Your Reflection</span>
+                          </div>
+                          <p className="text-teal-200/90 whitespace-pre-wrap leading-relaxed">
+                            {insight.response}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex justify-end">
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(insight.id)}
+                          className="relative overflow-hidden"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Remove from Journal
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: insights.length * 0.1 + 0.5 }}
+              className="text-center pt-12"
+            >
+              <Card className="neon-border">
+                <CardContent className="p-8">
+                  <h3 className="text-xl font-kahoot font-bold text-teal-400 mb-4">Continue Your Journey</h3>
+                  <p className="text-teal-200/70 mb-6">Discover more insights about yourself</p>
+                  <Button onClick={() => router.push('/solo')} size="lg">
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Explore More Questions
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
         )}
       </main>
