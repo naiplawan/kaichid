@@ -104,7 +104,7 @@ export const GameCard = React.forwardRef<HTMLDivElement, GameCardProps>(
             className
           )}
           drag={!disabled ? "x" : false}
-          dragConstraints={{ left: 0, right: 0 }}
+          dragConstraints={{ left: -200, right: 200 }}
           onDrag={handleDrag}
           onDragEnd={handleDragEnd}
           animate={controls}

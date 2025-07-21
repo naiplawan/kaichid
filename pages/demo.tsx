@@ -1597,7 +1597,7 @@ const levelIcons = {
 
 export default function Demo() {
   const [currentStep, setCurrentStep] = useState<
-    'welcome' | 'solo' | 'multiplayer' | 'community' | 'features'
+    'welcome' | 'solo' | 'multiplayer' | 'community' | 'features' | 'completed'
   >('welcome');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showResponse, setShowResponse] = useState(false);
@@ -1605,6 +1605,8 @@ export default function Demo() {
   const [selectedUser, setSelectedUser] = useState<MockUser | null>(null);
   const [language, setLanguage] = useState<'en' | 'th'>('en');
   const [currentLevel, setCurrentLevel] = useState<'green' | 'yellow' | 'red'>('green');
+  const [gameCompleted, setGameCompleted] = useState(false);
+  const [completedMode, setCompletedMode] = useState<'solo' | 'multiplayer' | 'community' | 'features'>('solo');
   
   const locale = (demoLocale as any)[language];
   
@@ -1638,9 +1640,10 @@ export default function Demo() {
           setCurrentLevel('red');
           setCurrentQuestionIndex(0);
         } else {
-          // Completed all levels, restart from green
-          setCurrentLevel('green');
-          setCurrentQuestionIndex(0);
+          // Completed all levels - show completion screen
+          setGameCompleted(true);
+          setCompletedMode('solo');
+          setCurrentStep('completed');
         }
         setShowResponse(false);
         setResponse('');
@@ -1652,9 +1655,10 @@ export default function Demo() {
         setShowResponse(false);
         setResponse('');
       } else {
-        setCurrentQuestionIndex(0);
-        setShowResponse(false);
-        setResponse('');
+        // Completed demo - show completion screen
+        setGameCompleted(true);
+        setCompletedMode(currentStep as 'multiplayer' | 'community' | 'features');
+        setCurrentStep('completed');
       }
     }
   };
@@ -1669,6 +1673,8 @@ export default function Demo() {
     setShowResponse(false);
     setResponse('');
     setCurrentLevel('green');
+    setGameCompleted(false);
+    setCompletedMode('solo');
   };
 
   // Reset demo state when switching to solo
@@ -2345,10 +2351,114 @@ export default function Demo() {
                 </div>
               </motion.div>
             )}
+
+            {/* Game Completion Screen */}
+            {currentStep === 'completed' && (
+              <motion.div
+                key="completed"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.6 }}
+                className="text-center space-y-8"
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <motion.div
+                    className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-r from-teal-400 to-green-400 flex items-center justify-center"
+                    animate={{
+                      scale: [1, 1.1, 1],
+                      rotate: [0, 5, -5, 0],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  >
+                    <Crown className="w-12 h-12 text-white" />
+                  </motion.div>
+                  
+                  <motion.h2 
+                    className="text-4xl font-kahoot font-bold text-teal-400 mb-4"
+                    animate={{ scale: [1, 1.02, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    🎉 Congratulations! 🎉
+                  </motion.h2>
+                  
+                  <p className="text-xl text-teal-200/90 mb-6">
+                    You've completed the KAICHID demo experience!
+                  </p>
+                  
+                  <div className="max-w-md mx-auto bg-kahoot-dark-surface/50 p-6 rounded-xl border border-teal-500/30">
+                    <h3 className="text-lg font-semibold text-teal-300 mb-4">Your Journey Summary</h3>
+                    <div className="space-y-2 text-sm text-teal-200/80">
+                      <div className="flex justify-between">
+                        <span>Questions Explored:</span>
+                        <span className="font-semibold text-teal-300">
+                          {completedMode === 'solo' ? '151 (All Levels)' : `${demoQuestions.length} Questions`}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Levels Completed:</span>
+                        <span className="font-semibold text-teal-300">
+                          {completedMode === 'solo' ? 'Green → Yellow → Red' : 'Demo Mode'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Mode:</span>
+                        <span className="font-semibold text-teal-300 capitalize">{completedMode === 'solo' ? 'Solo Journey' : 'Interactive Demo'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div 
+                  className="space-y-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <p className="text-teal-200/80">
+                    Ready to start your real journey of self-discovery?
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Button asChild size="lg" variant="default">
+                      <Link href="/auth/register">Create Account</Link>
+                    </Button>
+                    <Button asChild size="lg" variant="outline">
+                      <Link href="/solo">Try Real Solo Mode</Link>
+                    </Button>
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+                    <Button
+                      onClick={() => {
+                        resetDemoState();
+                        setCurrentStep('welcome');
+                      }}
+                      variant="ghost"
+                      className="text-teal-400 hover:text-teal-300"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Restart Demo
+                    </Button>
+                    <Button asChild variant="secondary">
+                      <Link href="/dashboard">Go to Dashboard</Link>
+                    </Button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
           </AnimatePresence>
 
           {/* Call to Action */}
-          {currentStep !== 'welcome' && (
+          {currentStep !== 'welcome' && currentStep !== 'completed' && (
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
