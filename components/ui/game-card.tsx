@@ -1,6 +1,6 @@
 import * as React from "react"
-import { motion, useAnimation, type PanInfo } from "framer-motion"
-import { Flag, Zap, Brain, Target } from "lucide-react"
+import { motion } from "framer-motion"
+import { Flag, Zap, Brain, Target, ArrowRight, SkipForward } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Question } from "@/lib/supabase"
 import { SwipeDirection } from "@/lib/types"
@@ -36,78 +36,28 @@ const levelColors = {
 
 export const GameCard = React.forwardRef<HTMLDivElement, GameCardProps>(
   ({ question, onSwipe, onReport, disabled = false, className }, ref) => {
-    const [swipeDirection, setSwipeDirection] = React.useState<SwipeDirection | null>(null)
-    const [showFeedback, setShowFeedback] = React.useState(false)
-    const controls = useAnimation()
-    
     const LevelIcon = levelIcons[question.level as keyof typeof levelIcons] || Target
 
-    const handleDragEnd = (event: any, info: PanInfo) => {
+    const handleInsightClick = () => {
       if (disabled) return
-
-      const threshold = 150
-      const { offset, velocity } = info
-
-      if (Math.abs(offset.x) > threshold || Math.abs(velocity.x) > 500) {
-        const direction = offset.x > 0 ? "right" : "left"
-        setSwipeDirection(direction)
-
-        // Animate card out with web3 style
-        controls
-          .start({
-            x: direction === "right" ? 1000 : -1000,
-            rotate: direction === "right" ? 15 : -15,
-            opacity: 0,
-            scale: 0.8,
-            transition: { duration: 0.4, ease: "easeInOut" },
-          })
-          .then(() => {
-            onSwipe(direction, question)
-          })
-      } else {
-        // Snap back with elastic animation
-        controls.start({
-          x: 0,
-          rotate: 0,
-          scale: 1,
-          transition: { type: "spring", stiffness: 500, damping: 30 },
-        })
-        setSwipeDirection(null)
-        setShowFeedback(false)
-      }
+      onSwipe("right", question)
     }
 
-    const handleDrag = (event: any, info: PanInfo) => {
+    const handleSkipClick = () => {
       if (disabled) return
-
-      const { offset } = info
-      const threshold = 100
-
-      if (Math.abs(offset.x) > threshold) {
-        const direction = offset.x > 0 ? "right" : "left"
-        setSwipeDirection(direction)
-        setShowFeedback(true)
-      } else {
-        setSwipeDirection(null)
-        setShowFeedback(false)
-      }
+      onSwipe("left", question)
     }
 
     return (
-      <div className="relative w-full h-full flex items-center justify-center">
+      <div className="relative w-full h-full flex flex-col items-center justify-center gap-6">
         <motion.div
           ref={ref}
           className={cn(
-            "kahoot-card w-80 h-96 p-8 cursor-grab active:cursor-grabbing select-none",
+            "kahoot-card w-80 h-96 p-8 select-none",
             levelStyles[question.level as keyof typeof levelStyles],
             "cyber-grid",
             className
           )}
-          drag={!disabled ? "x" : false}
-          dragConstraints={{ left: -200, right: 200 }}
-          onDrag={handleDrag}
-          onDragEnd={handleDragEnd}
-          animate={controls}
           initial={{ opacity: 0, scale: 0.8, y: 50 }}
           whileInView={{ 
             opacity: 1, 
@@ -120,7 +70,6 @@ export const GameCard = React.forwardRef<HTMLDivElement, GameCardProps>(
             y: -5,
             transition: { duration: 0.2 }
           }}
-          whileTap={{ scale: 0.98 }}
         >
           {/* Level Indicator with Neon Effect */}
           <div className="absolute top-4 right-4 flex items-center space-x-2">
@@ -168,52 +117,8 @@ export const GameCard = React.forwardRef<HTMLDivElement, GameCardProps>(
               {question.text}
             </motion.h3>
             
-            <motion.div 
-              className="text-xs text-teal-300/60 absolute bottom-0 font-medium"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              <span className="flex items-center space-x-4">
-                <span className="flex items-center space-x-1">
-                  <span className="w-2 h-2 bg-kahoot-green rounded-full animate-pulse"></span>
-                  <span>Swipe right for insight</span>
-                </span>
-                <span className="flex items-center space-x-1">
-                  <span className="w-2 h-2 bg-kahoot-red rounded-full animate-pulse"></span>
-                  <span>Swipe left to skip</span>
-                </span>
-              </span>
-            </motion.div>
           </div>
 
-          {/* Swipe Feedback with Web3 Style */}
-          {showFeedback && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.2 }}
-              className={cn(
-                "swipe-feedback",
-                swipeDirection === "right" ? "insight-feedback" : "skip-feedback"
-              )}
-            >
-              <motion.span
-                animate={{
-                  scale: [1, 1.1, 1],
-                  rotate: swipeDirection === "right" ? [15, 20, 15] : [-15, -20, -15],
-                }}
-                transition={{
-                  duration: 0.3,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
-                {swipeDirection === "right" ? "INSIGHT" : "SKIP"}
-              </motion.span>
-            </motion.div>
-          )}
 
           {/* Report Button */}
           <motion.button
@@ -226,6 +131,31 @@ export const GameCard = React.forwardRef<HTMLDivElement, GameCardProps>(
             <span>Report</span>
           </motion.button>
         </motion.div>
+
+        {/* Action Buttons */}
+        <div className="flex space-x-6">
+          <motion.button
+            onClick={handleSkipClick}
+            disabled={disabled}
+            className="kahoot-button bg-kahoot-red/20 hover:bg-kahoot-red/30 border-kahoot-red/40 text-kahoot-red px-6 py-3 rounded-xl font-medium flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <SkipForward className="w-5 h-5" />
+            <span>Skip</span>
+          </motion.button>
+          
+          <motion.button
+            onClick={handleInsightClick}
+            disabled={disabled}
+            className="kahoot-button bg-kahoot-green/20 hover:bg-kahoot-green/30 border-kahoot-green/40 text-kahoot-green px-6 py-3 rounded-xl font-medium flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <ArrowRight className="w-5 h-5" />
+            <span>Insight</span>
+          </motion.button>
+        </div>
       </div>
     )
   }
