@@ -6,6 +6,7 @@ KAICHID transforms how people connect by providing guided, meaningful conversati
 
 ## ✨ Features
 
+- **Demo Mode**: Play instantly with 151 questions - no account required!
 - **Solo Mode**: Personal reflection with curated questions
 - **Multiplayer Rooms**: Real-time group conversations (Supabase Realtime)
 - **Question Library**: Curated and custom questions across different themes and difficulty levels
@@ -151,6 +152,18 @@ kaichid/
 ```
 
 ## 🎮 How to Play
+
+### Demo Mode (No Account Required!)
+1. Visit `/demo` from the homepage
+2. Choose from **151 curated questions** across three difficulty levels:
+   - **Green Level** (51 questions): Icebreaker conversations
+   - **Yellow Level** (50 questions): Exploration and deeper thoughts  
+   - **Red Level** (50 questions): Vulnerability and meaningful connections
+3. Experience different game modes:
+   - **Solo Demo**: Personal reflection journey
+   - **Multiplayer Simulation**: See how group conversations work
+   - **Community Showcase**: Explore sample user profiles and responses
+4. Play instantly - no signup, no credentials needed!
 
 ### Solo Mode
 1. Choose your preferred themes and difficulty
@@ -480,6 +493,19 @@ The pipeline ensures code quality and prevents breaking changes from reaching pr
 
 ### Latest Updates (2025-07-24)
 
+**🎮 Demo Flow Enhancement**
+- **Confirmed credential-free demo experience** with 151 questions
+- **Updated documentation** to highlight demo mode capabilities:
+  - 51 Green Level (Icebreaker) questions
+  - 50 Yellow Level (Exploration) questions  
+  - 50 Red Level (Vulnerability) questions
+- **Demo includes multiple game modes**:
+  - Solo gameplay with question progression
+  - Multiplayer simulation with mock users
+  - Community showcase with sample profiles
+- **Accessible via `/demo`** directly from homepage "Try Demo" button
+- **No authentication required** - users can play immediately
+
 **🔧 Build System & Development Experience**
 - **Fixed ESLint v9 compatibility issues** with Next.js 14
 - **Downgraded ESLint** from v9.30.1 to v8.57.1 for stable compatibility
@@ -496,12 +522,14 @@ The pipeline ensures code quality and prevents breaking changes from reaching pr
 - Documented ESLint configuration changes
 - Added changelog to track project updates
 - Improved README structure for better navigation
+- **Added demo mode documentation** with detailed instructions
 
 **✅ Verified Working**
 - ✅ `pnpm build` - Production build successful
 - ✅ `pnpm lint` - Linting works with warnings only
 - ✅ `pnpm dev` - Development server starts correctly
 - ✅ `pnpm type-check` - TypeScript checking functional
+- ✅ **Demo flow** - 151 questions accessible without credentials
 
 ---
 
