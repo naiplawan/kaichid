@@ -44,8 +44,8 @@ export default function Register() {
     try {
       await signUp(email, password, username);
       router.push('/dashboard');
-    } catch (error: any) {
-      setError(error.message || 'Failed to create account');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to create account');
     } finally {
       setLoading(false);
     }

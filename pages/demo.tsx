@@ -3,11 +3,30 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Head from 'next/head';
-import { Play, Users, User, Sparkles, ArrowLeft, ArrowRight, Crown, Heart, Brain, Target, Zap } from 'lucide-react';
+import { Users, User, Sparkles, ArrowLeft, ArrowRight, Crown, Heart, Brain, Target, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GameCard } from '@/components/ui/game-card';
 import demoLocale from '../locales/demo.json';
+
+interface DemoLocale {
+  en: {
+    backToHome: string;
+    welcome: string;
+    intro: string;
+    howToPlay: string;
+    howToPlaySteps: string[];
+    howToPlayNote: string;
+  };
+  th: {
+    backToHome: string;
+    welcome: string;
+    intro: string;
+    howToPlay: string;
+    howToPlaySteps: string[];
+    howToPlayNote: string;
+  };
+}
 
 interface DemoQuestion {
   id: string;
@@ -1608,7 +1627,7 @@ export default function Demo() {
   const [gameCompleted, setGameCompleted] = useState(false);
   const [completedMode, setCompletedMode] = useState<'solo' | 'multiplayer' | 'community' | 'features'>('solo');
   
-  const locale = (demoLocale as any)[language];
+  const locale = (demoLocale as DemoLocale)[language];
   
   // Filter questions by current level for solo demo
   const levelQuestions = demoQuestions.filter(q => q.level === currentLevel);
@@ -1849,7 +1868,7 @@ export default function Demo() {
                             whileTap={{ scale: 0.95 }}
                           >
                             <Button
-                              onClick={() => setCurrentStep(option.id as any)}
+                              onClick={() => setCurrentStep(option.id as 'solo' | 'multiplayer' | 'community' | 'features')}
                               variant="default"
                               size="xl"
                               className="w-full h-auto p-6 flex flex-col items-center space-y-3"
@@ -1942,7 +1961,7 @@ export default function Demo() {
                 {currentQuestion && (
                   <div className="flex justify-center mb-8">
                     <GameCard
-                      question={currentQuestion as any}
+                      question={currentQuestion}
                       onSwipe={handleSwipe}
                       onReport={handleReportQuestion}
                     />
@@ -2041,7 +2060,7 @@ export default function Demo() {
                 {currentQuestion && (
                   <div className="flex justify-center mb-8">
                     <GameCard
-                      question={currentQuestion as any}
+                      question={currentQuestion}
                       onSwipe={handleSwipe}
                       onReport={handleReportQuestion}
                     />

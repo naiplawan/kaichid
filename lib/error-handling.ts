@@ -5,7 +5,7 @@ export class AppError extends Error {
     message: string,
     public statusCode: number = 500,
     public code?: string,
-    public context?: any
+    public context?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'AppError';
@@ -61,7 +61,7 @@ export class RateLimitError extends AppError {
 
 // Error reporting service
 export const errorReporting = {
-  captureException: (error: Error, context?: any) => {
+  captureException: (error: Error, context?: Record<string, unknown>) => {
     // In production, send to monitoring service (Sentry, LogRocket, etc.)
     console.error('[ERROR]', {
       message: error.message,
@@ -77,7 +77,7 @@ export const errorReporting = {
     // Sentry.captureException(error, { extra: context });
   },
 
-  captureMessage: (message: string, level: 'info' | 'warning' | 'error' = 'info', context?: any) => {
+  captureMessage: (message: string, level: 'info' | 'warning' | 'error' = 'info', context?: Record<string, unknown>) => {
     console.log(`[${level.toUpperCase()}]`, message, context);
     
     // TODO: Integrate with monitoring service
@@ -86,7 +86,7 @@ export const errorReporting = {
 };
 
 // Async error wrapper for components
-export function withErrorHandling<T extends any[], R>(
+export function withErrorHandling<T extends unknown[], R>(
   fn: (...args: T) => Promise<R>,
   errorMessage: string = 'Operation failed'
 ): (...args: T) => Promise<{ data?: R; error?: string }> {
@@ -105,7 +105,7 @@ export function withErrorHandling<T extends any[], R>(
 // React hook for error handling
 export function useErrorHandler() {
   return {
-    handleError: (error: Error, context?: any) => {
+    handleError: (error: Error, context?: Record<string, unknown>) => {
       errorReporting.captureException(error, context);
     },
     
@@ -123,8 +123,8 @@ export function useErrorHandler() {
   };
 }
 
-// Network error handling
-export function handleNetworkError(error: any): AppError {
+// Network error handling  
+export function handleNetworkError(error: NetworkError): AppError {
   if (error.code === 'ECONNREFUSED') {
     return new AppError('Unable to connect to server', 503, 'CONNECTION_ERROR');
   }
@@ -158,23 +158,35 @@ export function handleNetworkError(error: any): AppError {
   return new AppError(error.message || 'An unexpected error occurred');
 }
 
+// Network error interface
+interface NetworkError {
+  code?: string;
+  message: string;
+  response?: {
+    status: number;
+    data?: {
+      message?: string;
+    };
+  };
+}
+
 // Type guard for checking error types
-export function isAppError(error: any): error is AppError {
+export function isAppError(error: unknown): error is AppError {
   return error instanceof AppError;
 }
 
-export function isValidationError(error: any): error is ValidationError {
+export function isValidationError(error: unknown): error is ValidationError {
   return error instanceof ValidationError;
 }
 
-export function isAuthError(error: any): error is AuthenticationError | AuthorizationError {
+export function isAuthError(error: unknown): error is AuthenticationError | AuthorizationError {
   return error instanceof AuthenticationError || error instanceof AuthorizationError;
 }
 
 // Error boundary hook
 export function useErrorBoundary() {
   return {
-    captureError: (error: Error, errorInfo?: any) => {
+    captureError: (error: Error, errorInfo?: Record<string, unknown>) => {
       errorReporting.captureException(error, errorInfo);
     }
   };

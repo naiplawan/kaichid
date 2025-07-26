@@ -55,21 +55,53 @@ export interface RoomSettings {
 export interface GameSession {
   id: string;
   room_id: string;
-  current_round: number;
+  status: 'waiting' | 'active' | 'paused' | 'completed';
+  current_question_id: string | null;
+  current_player_index: number;
+  question_queue: string[];
   total_rounds: number;
-  status: 'active' | 'completed';
+  current_round: number;
+  settings: Record<string, unknown>;
+  started_at: string | null;
+  ended_at: string | null;
   created_at: string;
-  completed_at?: string;
+  updated_at: string;
 }
 
-export interface PlayerResponse {
+export interface PlayerSession {
   id: string;
   session_id: string;
-  player_id: string;
+  user_id: string;
+  position: number;
+  status: 'active' | 'inactive' | 'disconnected';
+  last_seen: string;
+  score: number;
+  responses_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SessionResponse {
+  id: string;
+  session_id: string;
   question_id: string;
-  response?: string;
+  user_id: string;
+  response_text: string;
+  response_order: number;
   round_number: number;
-  submitted_at: string;
+  is_current_turn: boolean;
+  likes_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GameEvent {
+  id: string;
+  session_id: string;
+  user_id: string;
+  event_type: string;
+  event_data: Record<string, unknown>;
+  created_at: string;
 }
 
 // Game state interfaces
@@ -116,13 +148,13 @@ export interface GameContextType {
 }
 
 // API response types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: {
     code: string;
     message: string;
-    details?: any;
+    details?: Record<string, unknown>;
   };
 }
 
@@ -175,6 +207,32 @@ export type RoomStatus = 'waiting' | 'playing' | 'finished';
 export type QuestionStatus = 'approved' | 'pending' | 'rejected';
 export type Privacy = 'private' | 'shared';
 
+// Real-time game event types
+export interface GameEventPayload {
+  PLAYER_JOINED: { player: PlayerSession };
+  PLAYER_LEFT: { playerId: string };
+  TURN_CHANGED: { currentPlayerIndex: number; questionId: string };
+  RESPONSE_SUBMITTED: { response: SessionResponse };
+  GAME_STARTED: { sessionId: string; startedAt: string };
+  GAME_COMPLETED: { sessionId: string; endedAt: string };
+  PLAYER_PRESENCE: { userId: string; status: 'online' | 'offline' };
+}
+
+export interface RealtimeGameEvent<T extends keyof GameEventPayload = keyof GameEventPayload> {
+  type: T;
+  payload: GameEventPayload[T];
+  timestamp: string;
+  userId: string;
+}
+
+export interface GameEventCallbacks {
+  onSessionUpdate: (payload: unknown) => void;
+  onResponseUpdate: (payload: unknown) => void;
+  onPresenceSync: () => void;
+  onPlayerJoin: (payload: unknown) => void;
+  onPlayerLeave: (payload: unknown) => void;
+}
+
 // Event handler types
 export type SwipeDirection = 'left' | 'right';
 export type SwipeHandler = (direction: SwipeDirection, question: Question) => void;
@@ -210,9 +268,9 @@ export interface Database {
         Update: Partial<Omit<GameSession, 'id' | 'created_at'>>;
       };
       player_responses: {
-        Row: PlayerResponse;
-        Insert: Omit<PlayerResponse, 'id' | 'submitted_at'>;
-        Update: Partial<Omit<PlayerResponse, 'id' | 'submitted_at'>>;
+        Row: SessionResponse;
+        Insert: Omit<SessionResponse, 'id' | 'created_at'>;
+        Update: Partial<Omit<SessionResponse, 'id' | 'created_at'>>;
       };
     };
   };

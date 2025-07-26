@@ -1,9 +1,26 @@
 import { useState } from 'react';
 import demoLocale from '../locales/demo.json';
 
+interface DemoLocale {
+  en: {
+    welcome: string;
+    intro: string;
+    howToPlay: string;
+    howToPlaySteps: string[];
+    howToPlayNote: string;
+  };
+  th: {
+    welcome: string;
+    intro: string;
+    howToPlay: string;
+    howToPlaySteps: string[];
+    howToPlayNote: string;
+  };
+}
+
 export default function Demo() {
   const [language, setLanguage] = useState<'en' | 'th'>('en');
-  const locale = (demoLocale as any)[language];
+  const locale = (demoLocale as DemoLocale)[language];
 
   return (
     <div>

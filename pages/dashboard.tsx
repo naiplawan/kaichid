@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
-import { Play, LogOut, User, Plus, DoorOpen, Edit, Settings } from 'lucide-react';
+import { Play, LogOut, User, Plus } from 'lucide-react';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();

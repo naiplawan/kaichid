@@ -49,25 +49,17 @@ export const reportQuestionSchema = z.object({
   questionId: z.string().uuid('Invalid question ID'),
 });
 
-// API response standardization
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: {
-    code: string;
-    message: string;
-    details?: any;
-  };
-}
+// API response standardization (using shared type from types.ts)
+import { ApiResponse } from './types';
 
 export function createApiResponse<T>(data: T): ApiResponse<T> {
   return { success: true, data };
 }
 
-export function createApiError(code: string, message: string, details?: any): ApiResponse {
+export function createApiError(code: string, message: string, details?: Record<string, unknown>): ApiResponse {
   return { 
     success: false, 
-    error: { code, message, details } 
+    error: details ? { code, message, details } : { code, message }
   };
 }
 
@@ -79,7 +71,7 @@ export function withValidation<T>(schema: z.ZodSchema<T>) {
       return { success: true, data: validatedData };
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const messages = error.issues.map((err: any) => `${err.path.join('.')}: ${err.message}`);
+        const messages = error.issues.map((err) => `${err.path.join('.')}: ${err.message}`);
         return { success: false, error: messages.join(', ') };
       }
       return { success: false, error: 'Invalid input data' };

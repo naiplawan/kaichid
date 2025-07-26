@@ -10,7 +10,7 @@ type AsyncFunction<T> = () => Promise<T>;
 
 export function useAsync<T>(
   asyncFunction: AsyncFunction<T>,
-  dependencies: any[] = []
+  dependencies: React.DependencyList = []
 ): AsyncState<T> & { retry: () => void } {
   const [state, setState] = useState<AsyncState<T>>({
     data: null,
@@ -30,7 +30,7 @@ export function useAsync<T>(
         error: error instanceof Error ? error.message : 'An error occurred',
       });
     }
-  }, dependencies);
+  }, [asyncFunction, ...dependencies]);
 
   useEffect(() => {
     execute();

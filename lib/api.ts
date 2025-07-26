@@ -34,7 +34,7 @@ export const api = {
   },
 
   // Rooms API
-  createRoom: async (roomData: { creator_id: string; max_players?: number; settings?: any }) => {
+  createRoom: async (roomData: { creator_id: string; max_players?: number; settings?: Record<string, unknown> }) => {
     const response = await fetch(`${API_BASE_URL}/api/rooms`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
